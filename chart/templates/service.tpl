@@ -7,15 +7,7 @@ metadata:
 spec:
   type: {{ .Values.service.type }}
   ports:
-    - port: {{ .Values.service.port }} 
-      targetPort: tcp
-      protocol: TCP
-      name: tcp
-      {{- with .Values.service.nodePort }}
-      nodePort:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-    - port: {{ .Values.service.httpPort }}
+    - port: {{ .Values.service.port }}
       targetPort: http
       protocol: TCP
       name: http
