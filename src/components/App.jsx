@@ -17,7 +17,7 @@ export default function App() {
     } else {
       proto = "ws";
     }
-    url = `${proto}://${loc.hostname}:${loc.port}/ws`;
+    url = `${proto}://${loc.hostname}${loc.port ? ":" : ""}${loc.port}/ws`;
     setWbAddress(url);
   }
 
