@@ -27,12 +27,6 @@ spec:
       serviceAccountName: {{ include "chart.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
-      {{- if .Values.storage.enabled }}
-      volumes:
-        - name: {{ include "chart.fullname" . }}
-          persistentVolumeClaim:
-            claimName: {{ include "chart.fullname" . }}
-      {{- end }}
       containers:
         - name: {{ .Chart.Name }}
           securityContext:
@@ -53,11 +47,6 @@ spec:
               port: http
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-          {{- if .Values.storage.enabled }}
-          volumeMounts:
-            - mountPath: "/data"
-              name: {{ include "chart.fullname" . }}
-          {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
