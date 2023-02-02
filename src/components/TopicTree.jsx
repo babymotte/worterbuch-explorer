@@ -58,7 +58,7 @@ function toTreeItem(path, item, id, separator) {
           display="inline-block"
           style={{ fontWeight: 600, marginInlineStart: 4 }}
         >
-          {item.value}
+          {JSON.stringify(item.value)}
         </Typography>
       </>
     ) : (
