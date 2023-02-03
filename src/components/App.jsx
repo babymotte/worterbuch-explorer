@@ -1,11 +1,10 @@
 import * as React from "react";
 import TopicTree from "./TopicTree";
 import SortedMap from "collections/sorted-map";
+import ServerSelection from "./ServerSelection";
 
 export default function App() {
-  const [wbAddress, setWbAddress] = React.useState(
-    window.localStorage?.getItem("worterbuch.address")
-  );
+  const [wbAddress, setWbAddress] = React.useState();
 
   let url = wbAddress;
 
@@ -20,12 +19,6 @@ export default function App() {
     url = `${proto}://${loc.hostname}${loc.port ? ":" : ""}${loc.port}/ws`;
     setWbAddress(url);
   }
-
-  React.useEffect(() => {
-    if (window.localStorage) {
-      window.localStorage.setItem("worterbuch.address", url);
-    }
-  }, [url]);
 
   const dataRef = React.useRef(new SortedMap());
   const [data, setData] = React.useState(new SortedMap());
@@ -45,6 +38,10 @@ export default function App() {
   }, [socket]);
 
   React.useEffect(() => {
+    if (url === undefined || url === null || url === "" || url === "null") {
+      return;
+    }
+    console.log("url", url);
     console.log("Connecting to server.");
     const socket = new WebSocket(url);
     socket.onclose = (e) => {
@@ -88,19 +85,12 @@ export default function App() {
     };
   }, [url]);
 
-  function handleUrlInput(e) {
-    if (e.key === "Enter") {
-      setWbAddress(e.target.value);
-    }
-  }
-
   return (
     <div className="App">
-      <nav className="AddressBar">
-        <input type="text" defaultValue={url} onKeyDown={handleUrlInput} />
-      </nav>
-      <div className="spacer" style={{ padding: "4px" }} />
-      <TopicTree data={data} separator={separatorRef.current} />
+      <ServerSelection switchToServer={setWbAddress} />
+      {socket ? (
+        <TopicTree data={data} separator={separatorRef.current} />
+      ) : null}
     </div>
   );
 }
