@@ -2,9 +2,8 @@ import * as React from "react";
 import TopicTree from "./TopicTree";
 import SortedMap from "collections/sorted-map";
 import ServerSelection from "./ServerSelection";
-import { Stack, Typography } from "@mui/material";
-import ErrorIcon from "@mui/icons-material/Error";
-import WarningIcon from "@mui/icons-material/Warning";
+import StatusIndicator from "./StatusIndicator";
+import { Stack } from "@mui/material";
 
 export default function App() {
   const [wbAddress, setWbAddress] = React.useState();
@@ -30,7 +29,7 @@ export default function App() {
   }, [socket]);
 
   React.useEffect(() => {
-    if (url === undefined || url === null || url.trim() === "") {
+    if (urlInvalid(url)) {
       return;
     }
     console.log("url", url);
@@ -77,6 +76,7 @@ export default function App() {
         socket.send(JSON.stringify(handshake));
       };
     } catch {
+      console.log("Invalid URL", url);
       setError("Invalid URL!");
     }
     return () => {
@@ -91,29 +91,27 @@ export default function App() {
 
   return (
     <div className="App">
-      <ServerSelection switchToServer={setWbAddress} />
-      {error ? (
-        <Stack direction="row" spacing={1} alignItems="center">
-          <ErrorIcon color="error" />
-          <Typography>{error}</Typography>
-        </Stack>
-      ) : url ? (
-        socket ? (
-          <TopicTree data={data} separator={separatorRef.current} />
-        ) : (
-          <Stack direction="row" spacing={1} alignItems="center">
-            <ErrorIcon color="error" />
-            <Typography>Could not connect to server!</Typography>
-          </Stack>
-        )
-      ) : (
-        <Stack direction="row" spacing={1} alignItems="center">
-          <WarningIcon color="warning" />
-          <Typography>No server selected.</Typography>
-        </Stack>
-      )}
+      <Stack direction="row">
+        <ServerSelection
+          switchToServer={setWbAddress}
+          urlInvalid={urlInvalid(url)}
+        />
+        <StatusIndicator
+          error={error}
+          noServerSelected={!url}
+          connected={socket !== undefined}
+        />
+      </Stack>
+
+      {socket ? (
+        <TopicTree data={data} separator={separatorRef.current} />
+      ) : null}
     </div>
   );
+
+  function urlInvalid(url) {
+    return url === undefined || url === null || url.trim() === "";
+  }
 }
 
 function mergeKeyValuePairs(kvps, data, separator) {

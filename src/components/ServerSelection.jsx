@@ -35,7 +35,7 @@ function loadPersistedSelectedServer() {
   }
 }
 
-export default function ServerSelection({ switchToServer }) {
+export default function ServerSelection({ switchToServer, urlInvalid }) {
   const [knownServers, setKnownServers] = React.useState(
     loadPersistedServers()
   );
@@ -86,6 +86,7 @@ export default function ServerSelection({ switchToServer }) {
         renderInput={(params) => <TextField {...params} label="Server" />}
       />
       <Button
+        disabled={urlInvalid}
         variant="contained"
         color={serverIsKnown ? "error" : "primary"}
         onClick={() => {
