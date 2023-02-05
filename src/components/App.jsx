@@ -46,11 +46,20 @@ export default function App() {
       socket.onmessage = async (e) => {
         const msg = JSON.parse(e.data);
         if (msg.pState) {
-          mergeKeyValuePairs(
-            msg.pState.keyValuePairs,
-            dataRef.current,
-            separatorRef.current
-          );
+          if (msg.pState.keyValuePairs) {
+            mergeKeyValuePairs(
+              msg.pState.keyValuePairs,
+              dataRef.current,
+              separatorRef.current
+            );
+          }
+          if (msg.pState.deleted) {
+            removeKeyValuePairs(
+              msg.pState.deleted,
+              dataRef.current,
+              separatorRef.current
+            );
+          }
           setData(new SortedMap(dataRef.current));
         }
         if (msg.handshake) {
@@ -121,6 +130,13 @@ function mergeKeyValuePairs(kvps, data, separator) {
   }
 }
 
+function removeKeyValuePairs(kvps, data, separator) {
+  for (const { key, value } of kvps) {
+    const segments = key.split(separator);
+    remove(data, segments.shift(), segments, value);
+  }
+}
+
 function mergeIn(data, headSegment, segmentsTail, value) {
   let child = data.get(headSegment);
   if (!child) {
@@ -136,5 +152,30 @@ function mergeIn(data, headSegment, segmentsTail, value) {
       child.children = new SortedMap();
     }
     mergeIn(child.children, segmentsTail.shift(), segmentsTail, value);
+  }
+}
+
+function remove(data, headSegment, segmentsTail) {
+  let child = data.get(headSegment);
+  if (!child) {
+    return;
+  }
+
+  if (segmentsTail.length === 0) {
+    child.value = undefined;
+    if (!child.children?.size) {
+      data.delete(headSegment);
+    }
+    return;
+  } else {
+    if (!child.children) {
+      return;
+    }
+    remove(child.children, segmentsTail.shift(), segmentsTail);
+    if (!child.value && !child.children?.size) {
+      data.delete(headSegment);
+    }
+
+    return;
   }
 }
