@@ -1,21 +1,30 @@
 import * as React from "react";
 import TopicTree from "./TopicTree";
 import SortedMap from "collections/sorted-map";
-import ServerSelection from "./ServerSelection";
-import StatusIndicator from "./StatusIndicator";
-import { Stack } from "@mui/material";
+import BottomPanel from "./BottomPanel";
+import { toUrl, useServers } from "./ServerManagement";
 
 export default function App() {
-  const [wbAddress, setWbAddress] = React.useState();
-
-  let url = wbAddress;
+  const { selectedServer, knownServers, setConnectionStatus } = useServers();
+  const url = toUrl(knownServers[selectedServer]);
 
   const dataRef = React.useRef(new SortedMap());
   const [data, setData] = React.useState(new SortedMap());
   const [socket, setSocket] = React.useState();
-  const [error, setError] = React.useState();
   const multiWildcardRef = React.useRef();
   const separatorRef = React.useRef();
+
+  React.useEffect(() => {
+    console.log("Clearing data");
+    setData(new SortedMap());
+  }, [selectedServer]);
+
+  if (!url) {
+    setConnectionStatus({
+      status: "warning",
+      message: "No server selected.",
+    });
+  }
 
   React.useEffect(() => {
     const topic = multiWildcardRef.current;
@@ -30,17 +39,28 @@ export default function App() {
 
   React.useEffect(() => {
     if (urlInvalid(url)) {
+      setConnectionStatus({
+        status: "warning",
+        message: "Invalid URL!",
+      });
       return;
     }
     console.log("url", url);
     console.log("Connecting to server.");
+    setConnectionStatus({
+      status: "warning",
+      message: "Connecting to server …",
+    });
 
     let socket;
 
     try {
       socket = new WebSocket(url);
-      setError(undefined);
       socket.onclose = (e) => {
+        setConnectionStatus({
+          status: "error",
+          message: "Disconnected from server.",
+        });
         setSocket(undefined);
       };
       socket.onmessage = async (e) => {
@@ -73,8 +93,18 @@ export default function App() {
           window.alert(meta);
         }
       };
+      socket.onerror = (e) => {
+        setConnectionStatus({
+          status: "error",
+          message: "Error in websocket connection.",
+        });
+      };
       socket.onopen = () => {
         console.log("Connected to server.");
+        setConnectionStatus({
+          status: "ok",
+          message: "Connected to server.",
+        });
         const handshake = {
           handshakeRequest: {
             supportedProtocolVersions: [{ major: 0, minor: 3 }],
@@ -86,13 +116,16 @@ export default function App() {
       };
     } catch {
       console.log("Invalid URL", url);
-      setError("Invalid URL!");
+      setConnectionStatus({
+        status: "warning",
+        message: "Invalid URL!",
+      });
     }
     return () => {
       console.log("Disconnecting from server.");
       socket?.close();
     };
-  }, [url]);
+  }, [setConnectionStatus, url]);
 
   if (!url) {
     console.log("no url specified");
@@ -100,21 +133,8 @@ export default function App() {
 
   return (
     <div className="App">
-      <Stack direction="row">
-        <ServerSelection
-          switchToServer={setWbAddress}
-          urlInvalid={urlInvalid(url)}
-        />
-        <StatusIndicator
-          error={error}
-          noServerSelected={!url}
-          connected={socket !== undefined}
-        />
-      </Stack>
-
-      {socket ? (
-        <TopicTree data={data} separator={separatorRef.current} />
-      ) : null}
+      <TopicTree data={data} separator={separatorRef.current} />
+      <BottomPanel />
     </div>
   );
 
