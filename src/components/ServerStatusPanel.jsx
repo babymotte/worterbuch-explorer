@@ -9,7 +9,7 @@ export default function ServerStatusPanel({ setEditing }) {
       <Stack direction="row" spacing={2}>
         <ServerSelection />
         <Button
-          variant="contained"
+          variant="outlined"
           selected
           color="primary"
           startIcon={<EditIcon />}

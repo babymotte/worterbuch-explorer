@@ -82,7 +82,7 @@ export default function ServerEditMask({
         Add
       </Button>
       <Button
-        variant="outlined"
+        variant="contained"
         selected
         color="primary"
         startIcon={<EditIcon />}

@@ -1,10 +1,17 @@
 import { CssBaseline, ThemeProvider } from "@mui/material";
+import { grey, teal } from "@mui/material/colors";
 import { createTheme } from "@mui/material/styles";
 import React, { useContext } from "react";
 
 const DarkTheme = createTheme({
   palette: {
     mode: "dark",
+    primary: {
+      main: teal["800"],
+    },
+    text: {
+      primary: grey["500"],
+    },
   },
 });
 
