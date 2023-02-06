@@ -3,6 +3,8 @@ import TopicTree from "./TopicTree";
 import SortedMap from "collections/sorted-map";
 import BottomPanel from "./BottomPanel";
 import { toUrl, useServers } from "./ServerManagement";
+import Theme from "./Theme";
+import { Stack } from "@mui/material";
 
 export default function App() {
   const { selectedServer, knownServers, setConnectionStatus } = useServers();
@@ -132,10 +134,12 @@ export default function App() {
   }
 
   return (
-    <div className="App">
-      <TopicTree data={data} separator={separatorRef.current} />
-      <BottomPanel />
-    </div>
+    <Theme>
+      <Stack padding={2} className="App">
+        <TopicTree data={data} separator={separatorRef.current} />
+        <BottomPanel />
+      </Stack>
+    </Theme>
   );
 
   function urlInvalid(url) {

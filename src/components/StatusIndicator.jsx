@@ -4,6 +4,7 @@ import ErrorIcon from "@mui/icons-material/Error";
 import WarningIcon from "@mui/icons-material/Warning";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { useServers } from "./ServerManagement";
+import ThemeSwitch from "./ThemeSwitch";
 
 export default function StatusIndicator({
   error,
@@ -23,9 +24,12 @@ export default function StatusIndicator({
       <CheckCircleIcon color="success" />
     );
   return (
-    <Stack direction="row" spacing={1} alignItems="center">
-      {icon}
-      <Typography>{message}</Typography>
+    <Stack direction="row" spacing={3} alignItems="center">
+      <ThemeSwitch />
+      <Stack direction="row" spacing={1} alignItems="center">
+        <Typography>{message}</Typography>
+        {icon}
+      </Stack>
     </Stack>
   );
 }
