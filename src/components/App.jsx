@@ -54,18 +54,20 @@ export default function App() {
       message: "Connecting to server …",
     });
 
-    let socket;
+    let ws;
 
     try {
-      socket = new WebSocket(url);
-      socket.onclose = (e) => {
-        setConnectionStatus({
-          status: "error",
-          message: "Disconnected from server.",
-        });
+      ws = new WebSocket(url);
+      ws.onclose = (e) => {
+        if (ws === socket) {
+          setConnectionStatus({
+            status: "error",
+            message: "Disconnected from server.",
+          });
+        }
         setSocket(undefined);
       };
-      socket.onmessage = async (e) => {
+      ws.onmessage = async (e) => {
         const msg = JSON.parse(e.data);
         if (msg.pState) {
           if (msg.pState.keyValuePairs) {
@@ -86,7 +88,7 @@ export default function App() {
         }
         if (msg.handshake) {
           console.log("Handshake complete.");
-          setSocket(socket);
+          setSocket(ws);
           separatorRef.current = msg.handshake.separator;
           multiWildcardRef.current = msg.handshake.multiWildcard;
         }
@@ -95,13 +97,15 @@ export default function App() {
           window.alert(meta);
         }
       };
-      socket.onerror = (e) => {
-        setConnectionStatus({
-          status: "error",
-          message: "Error in websocket connection.",
-        });
+      ws.onerror = (e) => {
+        if (ws === socket) {
+          setConnectionStatus({
+            status: "error",
+            message: "Error in websocket connection.",
+          });
+        }
       };
-      socket.onopen = () => {
+      ws.onopen = () => {
         console.log("Connected to server.");
         setConnectionStatus({
           status: "ok",
@@ -114,7 +118,7 @@ export default function App() {
             graveGoods: [],
           },
         };
-        socket.send(JSON.stringify(handshake));
+        ws.send(JSON.stringify(handshake));
       };
     } catch {
       console.log("Invalid URL", url);
@@ -125,7 +129,7 @@ export default function App() {
     }
     return () => {
       console.log("Disconnecting from server.");
-      socket?.close();
+      ws?.close();
     };
   }, [setConnectionStatus, url]);
 
