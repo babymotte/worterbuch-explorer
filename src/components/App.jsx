@@ -72,6 +72,11 @@ export default function App() {
     [setConnectionStatus]
   );
 
+  const clearData = React.useCallback(() => {
+    dataRef.current = new SortedMap();
+    setData(dataRef.current);
+  }, []);
+
   const onMessage = React.useCallback(
     (e) => {
       const msg = JSON.parse(e.data);
@@ -106,7 +111,7 @@ export default function App() {
   React.useEffect(() => {
     if (state === STATES.SWITCHING_SERVER) {
       if (socketRef.current) {
-        setData(new SortedMap());
+        clearData();
         socketRef.current.onclose = undefined;
         socketRef.current.onerror = undefined;
         socketRef.current.onmessage = undefined;
@@ -187,7 +192,7 @@ export default function App() {
     if (state === STATES.RECONNECTING) {
       setTimeout(transitionState(STATES.SWITCHING_SERVER), 1000);
     }
-  }, [onMessage, state, transitionState, url]);
+  }, [clearData, onMessage, state, transitionState, url]);
 
   return (
     <Theme>
