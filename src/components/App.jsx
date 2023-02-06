@@ -6,6 +6,11 @@ import { toUrl, useServers } from "./ServerManagement";
 import Theme from "./Theme";
 import { Stack } from "@mui/material";
 
+let transactionId = 1;
+function tid() {
+  return transactionId++;
+}
+
 const STATES = {
   SWITCHING_SERVER: "SWITCHING_SERVER",
   NO_SERVER_SELECTED: "NO_SERVER_SELECTED",
@@ -194,12 +199,18 @@ export default function App() {
     }
   }, [clearData, onMessage, state, transitionState, url]);
 
+  const set = React.useCallback((key, value) => {
+    socketRef.current.send(
+      JSON.stringify({ set: { transactionId: tid(), key, value } })
+    );
+  }, []);
+
   return (
     <Theme>
       <Stack sx={{ width: "100vw", height: "100vh" }}>
         <Stack flexGrow={1} overflow="auto">
           <Stack padding={2}>
-            <TopicTree data={data} />
+            <TopicTree data={data} set={set} />
           </Stack>
         </Stack>
         <BottomPanel />
