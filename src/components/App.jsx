@@ -205,12 +205,18 @@ export default function App() {
     );
   }, []);
 
+  const pdelete = React.useCallback((requestPattern) => {
+    socketRef.current.send(
+      JSON.stringify({ pDelete: { transactionId: tid(), requestPattern } })
+    );
+  }, []);
+
   return (
     <Theme>
       <Stack sx={{ width: "100vw", height: "100vh" }}>
         <Stack flexGrow={1} overflow="auto">
           <Stack padding={2}>
-            <TopicTree data={data} set={set} />
+            <TopicTree data={data} set={set} pdelete={pdelete} />
           </Stack>
         </Stack>
         <BottomPanel />
