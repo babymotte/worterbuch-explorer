@@ -3,7 +3,7 @@ import TreeView from "@mui/lab/TreeView";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import TreeItem from "@mui/lab/TreeItem";
-import { Stack, TextField, Typography } from "@mui/material";
+import { Stack, TextField, Tooltip, Typography } from "@mui/material";
 import DeleteButton from "./DeleteButton";
 
 export default function TopicTree({ data, set, pdelete }) {
@@ -70,6 +70,7 @@ function toTreeItem(path, item, id, set, pdelete) {
             pdelete(pattern);
             e.stopPropagation();
           }}
+          disabled={path.startsWith("$SYS")}
         />
       </Stack>
     );
@@ -84,14 +85,25 @@ function toTreeItem(path, item, id, set, pdelete) {
 function EditableLabel({ id, value, wbKey, set }) {
   const [editing, setEditing] = React.useState(false);
 
+  const maxLen = 256;
+  const shortValue =
+    value.length <= maxLen ? value : value.substring(0, maxLen - 2) + " …";
+
   const label = (
-    <Typography
-      display="inline-block"
-      style={{ fontWeight: 600, marginInlineStart: 4 }}
-      onDoubleClick={() => setEditing(true)}
+    <Tooltip
+      title={
+        <Stack sx={{ maxHeight: "75vh", overflow: "auto" }}>{value}</Stack>
+      }
+      enterDelay={750}
     >
-      {value}
-    </Typography>
+      <Typography
+        display="inline-block"
+        style={{ fontWeight: 600, marginInlineStart: 4 }}
+        onDoubleClick={() => setEditing(true)}
+      >
+        {shortValue}
+      </Typography>
+    </Tooltip>
   );
 
   const keyDown = (e) => {
@@ -112,7 +124,9 @@ function EditableLabel({ id, value, wbKey, set }) {
   );
   return (
     <Stack direction="row" alignItems="center">
-      <Typography display="inline-block">{id} = </Typography>
+      <Typography display="inline-block" whiteSpace="nowrap">
+        {id} ={" "}
+      </Typography>
       {editing ? editor : label}
     </Stack>
   );

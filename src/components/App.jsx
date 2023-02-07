@@ -5,6 +5,7 @@ import BottomPanel from "./BottomPanel";
 import { toUrl, useServers } from "./ServerManagement";
 import Theme from "./Theme";
 import { Stack } from "@mui/material";
+import SetPanel from "./SetPanel";
 
 let transactionId = 1;
 function tid() {
@@ -219,6 +220,7 @@ export default function App() {
             <TopicTree data={data} set={set} pdelete={pdelete} />
           </Stack>
         </Stack>
+        <SetPanel set={set} />
         <BottomPanel />
       </Stack>
     </Theme>
