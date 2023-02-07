@@ -35,20 +35,21 @@ function toTreeItems(data, set, path) {
 }
 
 function toTreeItem(path, item, id, set) {
-  if (!item.value && item.children && item.children.size === 1) {
+  if (item.value === undefined && item.children && item.children.size === 1) {
     const [childId, child] = item.children.entries().next().value;
     return toTreeItem(`${path}/${childId}`, child, `${id}/${childId}`, set);
   } else {
-    const label = item.value ? (
-      <EditableLabel
-        id={id}
-        value={JSON.stringify(item.value)}
-        wbKey={path}
-        set={set}
-      />
-    ) : (
-      <Typography display="inline-block">{id}</Typography>
-    );
+    const label =
+      item.value !== undefined ? (
+        <EditableLabel
+          id={id}
+          value={JSON.stringify(item.value)}
+          wbKey={path}
+          set={set}
+        />
+      ) : (
+        <Typography display="inline-block">{id}</Typography>
+      );
     return (
       <TreeItem key={path} nodeId={path} label={label}>
         {item.children ? toTreeItems(item.children, set, path) : null}
