@@ -169,7 +169,11 @@ export default function App() {
     if (state === STATES.CONNECTED) {
       const handshake = {
         handshakeRequest: {
-          supportedProtocolVersions: [{ major: 0, minor: 4 }],
+          supportedProtocolVersions: [
+            { major: 0, minor: 4 },
+            { major: 0, minor: 5 },
+            { major: 0, minor: 6 },
+          ],
           lastWill: [],
           graveGoods: [],
         },
