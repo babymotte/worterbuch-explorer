@@ -62,6 +62,7 @@ export default function App() {
   const dataRef = React.useRef(new SortedMap());
   const [data, setData] = React.useState(new SortedMap());
   const socketRef = React.useRef();
+  const keepaliveIntervalRef = React.useRef();
   const stateRef = React.useRef(STATES.STARTED);
   const [state, setState] = React.useState(stateRef.current);
   const transitionState = React.useCallback(
@@ -186,9 +187,13 @@ export default function App() {
         pSubscribe: { transactionId: 1, requestPattern: "#", unique: true },
       };
       socketRef.current.send(JSON.stringify(subscrMsg));
+      keepaliveIntervalRef.current = setInterval(() => {
+        socketRef.current.send(JSON.stringify(""));
+      }, 1000);
     }
 
     if (state === STATES.DISCONNECTED) {
+      clearInterval(keepaliveIntervalRef.current);
       socketRef.current = undefined;
       setTimeout(
         transitionState(STATES.RECONNECTING, {
