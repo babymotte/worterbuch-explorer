@@ -6,6 +6,7 @@ import Theme from "./Theme";
 import { Stack } from "@mui/material";
 import SetPanel from "./SetPanel";
 import { Worterbuch } from "worterbuch-react";
+import WorterbuchStatusIndicator from "./WorterbuchStatusIndicator";
 
 // const STATES = {
 //   SWITCHING_SERVER: "SWITCHING_SERVER",
@@ -20,11 +21,13 @@ import { Worterbuch } from "worterbuch-react";
 
 export default function App() {
   const { selectedServer, knownServers } = useServers();
+
   const { scheme, host, port } = knownServers[selectedServer] || {
     scheme: "ws",
     host: "localhost",
     port: 8080,
   };
+
   const config = {
     backendScheme: scheme,
     backendHost: host,
@@ -35,15 +38,17 @@ export default function App() {
   return (
     <Theme>
       <Worterbuch automaticReconnect config={config}>
-        <Stack sx={{ width: "100vw", height: "100vh" }}>
-          <Stack flexGrow={1} overflow="auto">
-            <Stack padding={2}>
-              <TopicTree />
+        <WorterbuchStatusIndicator>
+          <Stack sx={{ width: "100vw", height: "100vh" }}>
+            <Stack flexGrow={1} overflow="auto">
+              <Stack padding={2}>
+                <TopicTree />
+              </Stack>
             </Stack>
+            <SetPanel />
+            <BottomPanel />
           </Stack>
-          <SetPanel />
-          <BottomPanel />
-        </Stack>
+        </WorterbuchStatusIndicator>
       </Worterbuch>
     </Theme>
   );
