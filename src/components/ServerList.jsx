@@ -13,7 +13,7 @@ export default function ServerList({ sx }) {
     useServers();
 
   const listItems = knownServers.map((s, i) => {
-    const url = toUrl(s);
+    const [url] = toUrl(s);
 
     return (
       <ListItemButton

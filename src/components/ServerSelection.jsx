@@ -6,7 +6,7 @@ export default function ServerSelection({ switchToServer, urlInvalid }) {
   const { selectedServer, knownServers, selectServer } = useServers();
 
   const items = knownServers.map((s, i) => {
-    const url = toUrl(s);
+    const [url] = toUrl(s);
     return (
       <MenuItem key={url} value={i}>
         {url}

@@ -22,6 +22,7 @@ export default function ServerEditMask({
   const [scheme, setScheme] = React.useState("ws");
   const [host, setHost] = React.useState("");
   const [port, setPort] = React.useState(80);
+  const [authToken, setAuthToken] = React.useState(null);
 
   const { addServer } = useServers();
 
@@ -30,6 +31,7 @@ export default function ServerEditMask({
       scheme,
       host,
       port,
+      authToken,
     };
     addServer(server);
   };
@@ -77,6 +79,15 @@ export default function ServerEditMask({
         <Stack justifyContent="center">
           <Typography>/ws</Typography>
         </Stack>
+        <Stack justifyContent="center" />
+        <TextField
+          size="small"
+          label="Auth Token"
+          variant="outlined"
+          sx={{ width: "16em" }}
+          defaultValue={null}
+          onChange={(e) => setAuthToken(e.target.value)}
+        />
       </Stack>
       <Button variant="contained" onClick={addNewServer}>
         Add

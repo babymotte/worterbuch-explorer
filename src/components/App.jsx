@@ -6,6 +6,7 @@ import { toUrl, useServers } from "./ServerManagement";
 import Theme from "./Theme";
 import { Stack } from "@mui/material";
 import SetPanel from "./SetPanel";
+import { sha256 } from "js-sha256";
 
 let transactionId = 1;
 function tid() {
@@ -37,7 +38,7 @@ function transitionValid(stateRef, newState) {
     );
   }
   if (newState === STATES.ERROR) {
-    return oldState === STATES.CONNECTING;
+    return oldState === STATES.CONNECTING || oldState === STATES.CONNECTED;
   }
   if (newState === STATES.CONNECTED) {
     return oldState === STATES.CONNECTING;
@@ -57,7 +58,7 @@ function transitionValid(stateRef, newState) {
 
 export default function App() {
   const { selectedServer, knownServers, setConnectionStatus } = useServers();
-  const url = toUrl(knownServers[selectedServer]);
+  const [url, authToken] = toUrl(knownServers[selectedServer]);
 
   const dataRef = React.useRef(new SortedMap());
   const [data, setData] = React.useState(new SortedMap());
@@ -87,8 +88,33 @@ export default function App() {
   const onMessage = React.useCallback(
     (e) => {
       const msg = JSON.parse(e.data);
-      if (msg.handshake) {
-        console.log("Handshake complete:", msg.handshake);
+      if (msg.welcome) {
+        const supportedVersions = ["0.7"];
+        if (!supportedVersions.includes(msg.welcome.info.protocolVersion)) {
+          transitionState(STATES.ERROR, {
+            status: "error",
+            message: `Protocol version ${msg.welcome.info.protocolVersion} is not supported!`,
+          });
+          return;
+        }
+        if (msg.welcome.info.authenticationRequired) {
+          console.log("Authenticating ...");
+          const salted = msg.welcome.clientId + authToken;
+          const hash = sha256.create();
+          hash.update(salted);
+          const token = hash.hex();
+          socketRef.current.send(
+            JSON.stringify({ authenticationRequest: { authToken: token } })
+          );
+        } else {
+          transitionState(STATES.HANDSHAKE_COMPLETE, {
+            status: "ok",
+            message: "Connected to server",
+          });
+        }
+      }
+      if (msg.authenticated) {
+        console.log("Authentication successful");
         transitionState(STATES.HANDSHAKE_COMPLETE, {
           status: "ok",
           message: "Connected to server",
@@ -108,7 +134,7 @@ export default function App() {
         window.alert(meta);
       }
     },
-    [transitionState]
+    [authToken, transitionState]
   );
 
   React.useEffect(() => {
@@ -144,7 +170,7 @@ export default function App() {
         ws.onopen = () =>
           transitionState(STATES.CONNECTED, {
             status: "warning",
-            message: "WebSocket opened, waiting for handshake …",
+            message: "WebSocket opened, waiting for welcome message …",
           });
         ws.onerror = () =>
           transitionState(STATES.ERROR, {
@@ -165,21 +191,6 @@ export default function App() {
           message: "Invalid URL!",
         });
       }
-    }
-
-    if (state === STATES.CONNECTED) {
-      const handshake = {
-        handshakeRequest: {
-          supportedProtocolVersions: [
-            { major: 0, minor: 4 },
-            { major: 0, minor: 5 },
-            { major: 0, minor: 6 },
-          ],
-          lastWill: [],
-          graveGoods: [],
-        },
-      };
-      socketRef.current.send(JSON.stringify(handshake));
     }
 
     if (state === STATES.HANDSHAKE_COMPLETE) {

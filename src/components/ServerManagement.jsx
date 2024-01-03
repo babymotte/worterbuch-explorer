@@ -4,11 +4,14 @@ const ServerContext = React.createContext();
 
 export function toUrl(server) {
   if (!server) {
-    return undefined;
+    return [undefined, undefined];
   }
-  return `${server.scheme}://${server.host}${
-    server.port !== 80 ? ":" + server.port : ""
-  }/ws`;
+  return [
+    `${server.scheme}://${server.host}${
+      server.port !== 80 ? ":" + server.port : ""
+    }/ws`,
+    server.authToken,
+  ];
 }
 
 export function useServers() {
