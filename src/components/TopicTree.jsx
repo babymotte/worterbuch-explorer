@@ -68,10 +68,9 @@ function toTreeItem(path, item, id, set, pdelete) {
         <Stack direction="row">
           <CopyButton wbkey={path} wbvalue={item.value} />
           <DeleteButton
-            onClick={(e) => {
+            delete={() => {
               const pattern = item.value === undefined ? `${path}/#` : path;
               pdelete(pattern);
-              e.stopPropagation();
             }}
             disabled={path.startsWith("$SYS")}
           />

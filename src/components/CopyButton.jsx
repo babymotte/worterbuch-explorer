@@ -6,6 +6,8 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Snackbar from "@mui/material/Snackbar";
 import MuiAlert from "@mui/material/Alert";
+import ListItemText from "@mui/material/ListItemText";
+import ListItemIcon from "@mui/material/ListItemIcon";
 
 export default function CopyButton({ ...props }) {
   const [hovering, setHovering] = React.useState(false);
@@ -17,6 +19,7 @@ export default function CopyButton({ ...props }) {
 
   const handleContextMenu = (event) => {
     event.preventDefault();
+    event.stopPropagation();
     setContextMenu(
       contextMenu === null
         ? {
@@ -110,9 +113,24 @@ export default function CopyButton({ ...props }) {
             : undefined
         }
       >
-        <MenuItem onClick={copyKey}>Copy Key</MenuItem>
-        <MenuItem onClick={copyValue}>Copy Value</MenuItem>
-        <MenuItem onClick={copyJson}>Copy JSON</MenuItem>
+        <MenuItem onClick={copyKey}>
+          <ListItemIcon>
+            <ContentCopyIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Copy Key</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={copyValue}>
+          <ListItemIcon>
+            <ContentCopyIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Copy Value</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={copyJson}>
+          <ListItemIcon>
+            <ContentCopyIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Copy JSON</ListItemText>
+        </MenuItem>
       </Menu>
       <Snackbar
         open={successOpen}
