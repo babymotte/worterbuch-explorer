@@ -57,16 +57,23 @@ export default function DeleteButton({ ...props }) {
             : undefined
         }
       >
-        <MenuItem>
+        <MenuItem
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+        >
           <ListItemIcon>
             <WarningIcon fontSize="small" color="warning" />
           </ListItemIcon>
           <ListItemText>Are you sure?</ListItemText>
         </MenuItem>
         <MenuItem
-          color="error"
-          onClick={props.delete}
-          sx={{ fontWeight: "bold" }}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            props.delete();
+          }}
         >
           <ListItemIcon>
             <DeleteForeverIcon fontSize="small" color="error" />
