@@ -5,6 +5,7 @@ import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import TreeItem from "@mui/lab/TreeItem";
 import { Stack, TextField, Tooltip, Typography } from "@mui/material";
 import DeleteButton from "./DeleteButton";
+import CopyButton from "./CopyButton";
 
 export default function TopicTree({ data, set, pdelete }) {
   const treeItems = toTreeItems(data, set, pdelete);
@@ -64,14 +65,17 @@ function toTreeItem(path, item, id, set, pdelete) {
         ) : (
           <Typography display="inline-block">{id}</Typography>
         )}
-        <DeleteButton
-          onClick={(e) => {
-            const pattern = item.value === undefined ? `${path}/#` : path;
-            pdelete(pattern);
-            e.stopPropagation();
-          }}
-          disabled={path.startsWith("$SYS")}
-        />
+        <Stack direction="row">
+          <CopyButton wbkey={path} wbvalue={item.value} />
+          <DeleteButton
+            onClick={(e) => {
+              const pattern = item.value === undefined ? `${path}/#` : path;
+              pdelete(pattern);
+              e.stopPropagation();
+            }}
+            disabled={path.startsWith("$SYS")}
+          />
+        </Stack>
       </Stack>
     );
     return (
