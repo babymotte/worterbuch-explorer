@@ -13,7 +13,13 @@ import Typography from "@mui/material/Typography";
 export default function DeleteButton({ ...props }) {
   const [hovering, setHovering] = React.useState(false);
   const [contextMenu, setContextMenu] = React.useState(null);
-  const closeMenu = () => setContextMenu(null);
+  const closeMenu = (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    setContextMenu(null);
+  };
 
   const handleContextMenu = (event) => {
     event.preventDefault();

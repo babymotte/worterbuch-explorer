@@ -33,7 +33,13 @@ export default function CopyButton({ ...props }) {
     );
   };
 
-  const closeMenu = () => setContextMenu(null);
+  const closeMenu = (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    setContextMenu(null);
+  };
 
   const closeSuccess = (event, reason) => {
     if (reason === "clickaway") {
