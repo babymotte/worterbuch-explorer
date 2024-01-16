@@ -78,7 +78,7 @@ function Label({ id, value }) {
   const text = JSON.stringify(value);
   const tooltipText = JSON.stringify(value, null, 2);
 
-  const maxLen = 256;
+  const maxLen = 150;
   const shortValue =
     text.length <= maxLen ? text : text.substring(0, maxLen - 2) + " …";
 
