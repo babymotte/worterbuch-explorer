@@ -3,13 +3,13 @@ import TreeView from "@mui/lab/TreeView";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import TreeItem from "@mui/lab/TreeItem";
-import { Stack, TextField, Tooltip, Typography } from "@mui/material";
+import { Stack, Tooltip, Typography } from "@mui/material";
 import DeleteButton from "./DeleteButton";
 import CopyButton from "./CopyButton";
 import EditButton from "./EditButton";
 
-export default function TopicTree({ data, set, pdelete }) {
-  const treeItems = toTreeItems(data, set, pdelete);
+export default function TopicTree({ data, pdelete }) {
+  const treeItems = toTreeItems(data, pdelete);
 
   return (
     <TreeView
@@ -26,43 +26,26 @@ export default function TopicTree({ data, set, pdelete }) {
   );
 }
 
-function toTreeItems(data, set, pdelete, path) {
+function toTreeItems(data, pdelete, path) {
   let items = [];
 
   data.forEach((child, id) => {
-    const item = toTreeItem(
-      path ? `${path}/${id}` : id,
-      child,
-      id,
-      set,
-      pdelete
-    );
+    const item = toTreeItem(path ? `${path}/${id}` : id, child, id, pdelete);
     items.push(item);
   });
 
   return <>{items}</>;
 }
 
-function toTreeItem(path, item, id, set, pdelete) {
+function toTreeItem(path, item, id, pdelete) {
   if (item.value === undefined && item.children && item.children.size === 1) {
     const [childId, child] = item.children.entries().next().value;
-    return toTreeItem(
-      `${path}/${childId}`,
-      child,
-      `${id}/${childId}`,
-      set,
-      pdelete
-    );
+    return toTreeItem(`${path}/${childId}`, child, `${id}/${childId}`, pdelete);
   } else {
     const label = (
       <Stack direction="row" justifyContent="space-between" alignItems="center">
         {item.value !== undefined ? (
-          <EditableLabel
-            id={id}
-            value={JSON.stringify(item.value)}
-            wbkey={path}
-            set={set}
-          />
+          <Label id={id} value={item.value} />
         ) : (
           <Typography display="inline-block">{id}</Typography>
         )}
@@ -85,58 +68,49 @@ function toTreeItem(path, item, id, set, pdelete) {
     );
     return (
       <TreeItem key={path} nodeId={path} label={label}>
-        {item.children ? toTreeItems(item.children, set, pdelete, path) : null}
+        {item.children ? toTreeItems(item.children, pdelete, path) : null}
       </TreeItem>
     );
   }
 }
 
-function EditableLabel({ id, value, wbkey, set }) {
-  const [editing, setEditing] = React.useState(false);
+function Label({ id, value }) {
+  const text = JSON.stringify(value);
+  const tooltipText = JSON.stringify(value, null, 2);
 
   const maxLen = 256;
   const shortValue =
-    value.length <= maxLen ? value : value.substring(0, maxLen - 2) + " …";
+    text.length <= maxLen ? text : text.substring(0, maxLen - 2) + " …";
 
-  const label = (
+  return (
     <Tooltip
       title={
-        <Stack sx={{ maxHeight: "75vh", overflow: "auto" }}>{value}</Stack>
+        <Stack sx={{ maxHeight: "75vh", overflow: "auto" }}>
+          <Typography
+            variant="subtitle2"
+            sx={{ whiteSpace: "pre" }}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+          >
+            {tooltipText}
+          </Typography>
+        </Stack>
       }
       enterDelay={750}
     >
-      <Typography
-        display="inline-block"
-        style={{ fontWeight: 600, marginInlineStart: 4 }}
-        onDoubleClick={() => setEditing(true)}
-      >
-        {shortValue}
-      </Typography>
+      <Stack direction="row" alignItems="center">
+        <Typography display="inline-block" whiteSpace="nowrap">
+          {id} ={" "}
+        </Typography>
+        <Typography
+          display="inline-block"
+          style={{ fontWeight: 600, marginInlineStart: 4 }}
+        >
+          {shortValue}
+        </Typography>
+      </Stack>
     </Tooltip>
-  );
-
-  const keyDown = (e) => {
-    if (e.key === "Enter") {
-      set(wbkey, JSON.parse(e.target.value));
-      setEditing(false);
-    }
-  };
-
-  const editor = (
-    <TextField
-      defaultValue={value}
-      onKeyDown={keyDown}
-      onBlur={() => setEditing(false)}
-      size="small"
-      autoFocus
-    />
-  );
-  return (
-    <Stack direction="row" alignItems="center">
-      <Typography display="inline-block" whiteSpace="nowrap">
-        {id} ={" "}
-      </Typography>
-      {editing ? editor : label}
-    </Stack>
   );
 }

@@ -252,7 +252,7 @@ export default function App() {
         <Stack sx={{ width: "100vw", height: "100vh" }}>
           <Stack flexGrow={1} overflow="auto">
             <Stack padding={2}>
-              <TopicTree data={data} set={set} pdelete={pdelete} />
+              <TopicTree data={data} pdelete={pdelete} />
             </Stack>
           </Stack>
           <SetPanel set={set} />
