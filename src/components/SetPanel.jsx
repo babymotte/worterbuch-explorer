@@ -14,6 +14,7 @@ export default function SetPanel({ set }) {
     React.useContext(EditContext);
   const [valueValid, setValueValid] = React.useState(false);
   const [error, setError] = React.useState(false);
+  const [stringValue, setStringValue] = React.useState("");
 
   React.useEffect(() => {
     if (json) {
@@ -26,14 +27,14 @@ export default function SetPanel({ set }) {
         setError(err.message);
       }
     } else {
-      setValueValid(value !== undefined && value !== null);
+      setValueValid(stringValue !== undefined && stringValue !== null);
     }
-  }, [json, value]);
+  }, [json, value, stringValue]);
 
   const setKeyValue = () => {
     let parsed;
     try {
-      parsed = json ? JSON.parse(value) : value;
+      parsed = json ? JSON.parse(value) : stringValue;
     } catch (err) {
       console.error("Invalid JSON:", err.message);
       return;
@@ -53,8 +54,8 @@ export default function SetPanel({ set }) {
       set={setKeyValue}
       wbkey={key}
       setWbKey={setKey}
-      wbvalue={value}
-      setWbValue={setValue}
+      wbvalue={json ? value : stringValue}
+      setWbValue={json ? setValue : setStringValue}
       valueValid={valueValid}
       error={error}
       json={json}
@@ -66,8 +67,8 @@ export default function SetPanel({ set }) {
       set={setKeyValue}
       wbkey={key}
       setWbKey={setKey}
-      wbvalue={value}
-      setWbValue={setValue}
+      wbvalue={json ? value : stringValue}
+      setWbValue={json ? setValue : setStringValue}
       valueValid={valueValid}
       json={json}
       setJson={setJson}
