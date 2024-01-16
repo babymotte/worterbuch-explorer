@@ -1,4 +1,11 @@
-import { Button, Stack, Switch, TextField, Typography } from "@mui/material";
+import {
+  Button,
+  Stack,
+  Switch,
+  TextField,
+  Tooltip,
+  Typography,
+} from "@mui/material";
 import React from "react";
 import { EditContext } from "./EditButton";
 
@@ -6,14 +13,17 @@ export default function SetPanel({ set }) {
   const { setKey, setValue, key, value, json, setJson } =
     React.useContext(EditContext);
   const [valueValid, setValueValid] = React.useState(false);
+  const [error, setError] = React.useState(false);
 
   React.useEffect(() => {
     if (json) {
       try {
         JSON.parse(value);
         setValueValid(true);
-      } catch {
+        setError(null);
+      } catch (err) {
         setValueValid(false);
+        setError(err.message);
       }
     } else {
       setValueValid(value !== undefined && value !== null);
@@ -21,7 +31,15 @@ export default function SetPanel({ set }) {
   }, [json, value]);
 
   const setKeyValue = () => {
-    set(key, json ? JSON.parse(value) : value);
+    let parsed;
+    try {
+      parsed = json ? JSON.parse(value) : value;
+    } catch (err) {
+      console.error("Invalid JSON:", err.message);
+      return;
+    }
+
+    set(key, parsed);
   };
 
   const checkSet = (e) => {
@@ -38,6 +56,7 @@ export default function SetPanel({ set }) {
       wbvalue={value}
       setWbValue={setValue}
       valueValid={valueValid}
+      error={error}
       json={json}
       setJson={setJson}
       checkSet={checkSet}
@@ -120,6 +139,7 @@ function FullSetPanel({
   wbvalue,
   setWbValue,
   valueValid,
+  error,
   json,
   setJson,
   checkSet,
@@ -154,17 +174,19 @@ function FullSetPanel({
         error={!wbkey}
         onKeyDown={checkSet}
       />
-      <TextField
-        size="small"
-        label="Value"
-        multiline
-        onChange={(e) => setWbValue(e.target.value)}
-        value={wbvalue}
-        error={!valueValid}
-        sx={{ flexGrow: 1 }}
-        maxRows={12}
-        onKeyDown={checkSet}
-      />
+      <Tooltip title={error}>
+        <TextField
+          size="small"
+          label="Value"
+          multiline
+          onChange={(e) => setWbValue(e.target.value)}
+          value={wbvalue}
+          error={!valueValid}
+          sx={{ flexGrow: 1 }}
+          maxRows={12}
+          onKeyDown={checkSet}
+        />
+      </Tooltip>
     </Stack>
   );
 }
