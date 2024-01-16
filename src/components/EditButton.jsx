@@ -19,7 +19,11 @@ export default function EditButton({ ...props }) {
           e.stopPropagation();
           setJson(true);
           setKey(props.wbkey);
-          setValue(props.wbvalue ? JSON.stringify(props.wbvalue, null, 2) : "");
+          setValue(
+            props.wbvalue !== undefined
+              ? JSON.stringify(props.wbvalue, null, 2)
+              : ""
+          );
         }}
       >
         <IconButton
