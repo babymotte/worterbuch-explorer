@@ -1,7 +1,7 @@
 import { CssBaseline, ThemeProvider } from "@mui/material";
 import { grey, teal } from "@mui/material/colors";
 import { createTheme } from "@mui/material/styles";
-import React, { useContext } from "react";
+import React from "react";
 
 const DarkTheme = createTheme({
   palette: {
@@ -26,7 +26,7 @@ const DarkModeContext = React.createContext({
   setDarkMode: () => {},
 });
 
-export const useDarkMode = () => useContext(DarkModeContext);
+export const useDarkMode = () => React.useContext(DarkModeContext);
 
 const Theme = ({ children }) => {
   const [darkMode, setDarkMode] = usePersistedDM();

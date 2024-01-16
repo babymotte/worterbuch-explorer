@@ -6,6 +6,7 @@ import TreeItem from "@mui/lab/TreeItem";
 import { Stack, TextField, Tooltip, Typography } from "@mui/material";
 import DeleteButton from "./DeleteButton";
 import CopyButton from "./CopyButton";
+import EditButton from "./EditButton";
 
 export default function TopicTree({ data, set, pdelete }) {
   const treeItems = toTreeItems(data, set, pdelete);
@@ -59,13 +60,18 @@ function toTreeItem(path, item, id, set, pdelete) {
           <EditableLabel
             id={id}
             value={JSON.stringify(item.value)}
-            wbKey={path}
+            wbkey={path}
             set={set}
           />
         ) : (
           <Typography display="inline-block">{id}</Typography>
         )}
         <Stack direction="row">
+          <EditButton
+            wbkey={path}
+            wbvalue={item.value}
+            disabled={path.startsWith("$SYS")}
+          />
           <CopyButton wbkey={path} wbvalue={item.value} />
           <DeleteButton
             delete={() => {
@@ -85,7 +91,7 @@ function toTreeItem(path, item, id, set, pdelete) {
   }
 }
 
-function EditableLabel({ id, value, wbKey, set }) {
+function EditableLabel({ id, value, wbkey, set }) {
   const [editing, setEditing] = React.useState(false);
 
   const maxLen = 256;
@@ -111,7 +117,7 @@ function EditableLabel({ id, value, wbKey, set }) {
 
   const keyDown = (e) => {
     if (e.key === "Enter") {
-      set(wbKey, JSON.parse(e.target.value));
+      set(wbkey, JSON.parse(e.target.value));
       setEditing(false);
     }
   };

@@ -7,6 +7,7 @@ import Theme from "./Theme";
 import { Stack } from "@mui/material";
 import SetPanel from "./SetPanel";
 import { sha256 } from "js-sha256";
+import { EditContext } from "./EditButton";
 
 let transactionId = 1;
 function tid() {
@@ -232,17 +233,32 @@ export default function App() {
     );
   }, []);
 
+  const [editKey, setEditKey] = React.useState("");
+  const [editValue, setEditValue] = React.useState("");
+  const [json, setJson] = React.useState(false);
+
+  const editKontext = {
+    setKey: setEditKey,
+    setValue: setEditValue,
+    key: editKey,
+    value: editValue,
+    json,
+    setJson,
+  };
+
   return (
     <Theme>
-      <Stack sx={{ width: "100vw", height: "100vh" }}>
-        <Stack flexGrow={1} overflow="auto">
-          <Stack padding={2}>
-            <TopicTree data={data} set={set} pdelete={pdelete} />
+      <EditContext.Provider value={editKontext}>
+        <Stack sx={{ width: "100vw", height: "100vh" }}>
+          <Stack flexGrow={1} overflow="auto">
+            <Stack padding={2}>
+              <TopicTree data={data} set={set} pdelete={pdelete} />
+            </Stack>
           </Stack>
+          <SetPanel set={set} />
+          <BottomPanel />
         </Stack>
-        <SetPanel set={set} />
-        <BottomPanel />
-      </Stack>
+      </EditContext.Provider>
     </Theme>
   );
 }

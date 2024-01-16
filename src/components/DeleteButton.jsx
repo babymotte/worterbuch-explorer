@@ -48,7 +48,7 @@ export default function DeleteButton({ ...props }) {
           onMouseEnter={() => setHovering(true)}
           onMouseLeave={() => setHovering(false)}
           size="small"
-          {...props}
+          disabled={props.disabled}
         >
           <DeleteIcon />
         </IconButton>

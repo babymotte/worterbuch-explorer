@@ -1,10 +1,10 @@
 import { Button, Stack, Switch, TextField, Typography } from "@mui/material";
 import React from "react";
+import { EditContext } from "./EditButton";
 
 export default function SetPanel({ set }) {
-  const [key, setKey] = React.useState("");
-  const [value, setValue] = React.useState("");
-  const [json, setJson] = React.useState(false);
+  const { setKey, setValue, key, value, json, setJson } =
+    React.useContext(EditContext);
   const [valueValid, setValueValid] = React.useState(false);
 
   React.useEffect(() => {
@@ -33,9 +33,9 @@ export default function SetPanel({ set }) {
   return json ? (
     <FullSetPanel
       set={setKeyValue}
-      wbKey={key}
+      wbkey={key}
       setWbKey={setKey}
-      wbValue={value}
+      wbvalue={value}
       setWbValue={setValue}
       valueValid={valueValid}
       json={json}
@@ -45,9 +45,9 @@ export default function SetPanel({ set }) {
   ) : (
     <CompactSetPanel
       set={setKeyValue}
-      wbKey={key}
+      wbkey={key}
       setWbKey={setKey}
-      wbValue={value}
+      wbvalue={value}
       setWbValue={setValue}
       valueValid={valueValid}
       json={json}
@@ -59,9 +59,9 @@ export default function SetPanel({ set }) {
 
 function CompactSetPanel({
   set,
-  wbKey,
+  wbkey,
   setWbKey,
-  wbValue,
+  wbvalue,
   setWbValue,
   valueValid,
   json,
@@ -81,7 +81,7 @@ function CompactSetPanel({
         label="Key"
         sx={{ flexGrow: 1 }}
         onChange={(e) => setWbKey(e.target.value)}
-        value={wbKey}
+        value={wbkey}
         onKeyDown={checkSet}
         // error={!key}
       />
@@ -91,7 +91,7 @@ function CompactSetPanel({
         label="Value"
         multiline
         onChange={(e) => setWbValue(e.target.value)}
-        value={wbValue}
+        value={wbvalue}
         error={!valueValid}
         sx={{ flexGrow: 1 }}
         maxRows={6}
@@ -104,7 +104,7 @@ function CompactSetPanel({
       </Stack>
       <Button
         variant="contained"
-        disabled={!wbKey || !valueValid}
+        disabled={!wbkey || !valueValid}
         onClick={set}
       >
         Set
@@ -115,9 +115,9 @@ function CompactSetPanel({
 
 function FullSetPanel({
   set,
-  wbKey,
+  wbkey,
   setWbKey,
-  wbValue,
+  wbvalue,
   setWbValue,
   valueValid,
   json,
@@ -139,7 +139,7 @@ function FullSetPanel({
         </Stack>
         <Button
           variant="contained"
-          disabled={!wbKey || !valueValid}
+          disabled={!wbkey || !valueValid}
           onClick={set}
         >
           Set
@@ -150,8 +150,8 @@ function FullSetPanel({
         label="Key"
         sx={{ flexGrow: 1 }}
         onChange={(e) => setWbKey(e.target.value)}
-        value={wbKey}
-        error={!wbKey}
+        value={wbkey}
+        error={!wbkey}
         onKeyDown={checkSet}
       />
       <TextField
@@ -159,7 +159,7 @@ function FullSetPanel({
         label="Value"
         multiline
         onChange={(e) => setWbValue(e.target.value)}
-        value={wbValue}
+        value={wbvalue}
         error={!valueValid}
         sx={{ flexGrow: 1 }}
         maxRows={12}
