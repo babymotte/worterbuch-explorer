@@ -56,8 +56,6 @@ export default function CopyButton({ ...props }) {
   };
 
   const copyKey = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
     if (navigator?.clipboard?.writeText) {
       navigator.clipboard.writeText(props.wbkey);
       setSuccessText("Copied key to clipboard.");
@@ -65,12 +63,10 @@ export default function CopyButton({ ...props }) {
     } else {
       setErrorOpen(true);
     }
-    closeMenu();
+    closeMenu(e);
   };
 
   const copyValue = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
     if (navigator?.clipboard?.writeText) {
       navigator.clipboard.writeText(JSON.stringify(props.wbvalue));
       setSuccessText("Copied value to clipboard.");
@@ -78,12 +74,10 @@ export default function CopyButton({ ...props }) {
     } else {
       setErrorOpen(true);
     }
-    closeMenu();
+    closeMenu(e);
   };
 
   const copyJson = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
     if (navigator?.clipboard?.writeText) {
       navigator.clipboard.writeText(
         JSON.stringify({ key: props.wbkey, value: props.wbvalue })
@@ -93,7 +87,7 @@ export default function CopyButton({ ...props }) {
     } else {
       setErrorOpen(true);
     }
-    closeMenu();
+    closeMenu(e);
   };
 
   const Alert = React.forwardRef(function Alert(props, ref) {

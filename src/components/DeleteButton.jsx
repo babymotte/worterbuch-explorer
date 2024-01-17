@@ -76,9 +76,8 @@ export default function DeleteButton({ ...props }) {
         </MenuItem>
         <MenuItem
           onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
             props.delete();
+            closeMenu(e);
           }}
         >
           <ListItemIcon>

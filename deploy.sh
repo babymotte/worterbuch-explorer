@@ -5,4 +5,6 @@ git tag v$VERSION &&
     docker push babymotte/worterbuch-explorer:latest &&
     docker push babymotte/worterbuch-explorer:$VERSION &&
     git push && git push --tags &&
+    CHART=$(yq <chart/Chart.yaml ".version=\"$VERSION\"|.appVersion=\"$VERSION\"") &&
+    echo "$CHART" >chart/Chart.yaml &&
     helm upgrade worterbuch-explorer chart/
