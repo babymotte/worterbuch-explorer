@@ -25,12 +25,7 @@ export default function ServerList({ sx }) {
           <ServerIcon />
         </ListItemIcon>
         <ListItemText primary={url} />
-        <DeleteButton
-          onClick={() => {
-            console.log(i, removeServer);
-            removeServer(i);
-          }}
-        />
+        <DeleteButton delete={() => removeServer(i)} />
       </ListItemButton>
     );
   });

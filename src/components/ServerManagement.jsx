@@ -77,13 +77,29 @@ export default function ServerManagement({ children }) {
     status: "warning",
     message: "Connecting to server …",
   });
-  const addServer = React.useCallback(
+  const serverAlreadyExists = React.useCallback(
     (server) => {
-      const newServers = [...knownServers, server];
-      setKnownServers(newServers);
-      persistKnownServers(newServers);
+      const url = toUrl(server)[0];
+      for (const s of knownServers) {
+        if (toUrl(s)[0] === url) {
+          return true;
+        }
+      }
+      return false;
     },
     [knownServers]
+  );
+  const addServer = React.useCallback(
+    (server) => {
+      if (!serverAlreadyExists(addServer)) {
+        const newServers = [...knownServers, server];
+        setKnownServers(newServers);
+        persistKnownServers(newServers);
+      } else {
+        console.error("Server already exists:", server);
+      }
+    },
+    [knownServers, serverAlreadyExists]
   );
   const removeServer = React.useCallback(
     (server) => {
@@ -109,6 +125,7 @@ export default function ServerManagement({ children }) {
         removeServer,
         connectionStatus,
         setConnectionStatus,
+        serverAlreadyExists,
       }}
     >
       {children}

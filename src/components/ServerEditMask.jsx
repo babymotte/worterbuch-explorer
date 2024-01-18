@@ -5,6 +5,7 @@ import {
   MenuItem,
   Select,
   Stack,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import React from "react";
@@ -24,15 +25,19 @@ export default function ServerEditMask({
   const [port, setPort] = React.useState(80);
   const [authToken, setAuthToken] = React.useState(null);
 
-  const { addServer } = useServers();
+  const { addServer, serverAlreadyExists } = useServers();
+
+  const server = {
+    scheme,
+    host,
+    port,
+    authToken,
+  };
+
+  const alreadyExists = serverAlreadyExists(server);
+  const error = alreadyExists ? "Server already exists" : "";
 
   const addNewServer = () => {
-    const server = {
-      scheme,
-      host,
-      port,
-      authToken,
-    };
     addServer(server);
   };
 
@@ -41,45 +46,55 @@ export default function ServerEditMask({
       <Stack direction="row" spacing={1}>
         <FormControl>
           <InputLabel id="scheme-select-label">Scheme</InputLabel>
-          <Select
-            size="small"
-            labelId="scheme-select-label"
-            value={scheme}
-            label="Scheme"
-            onChange={(e) => {
-              setScheme(e.target.value);
-            }}
-            sx={{ width: "6em" }}
-          >
-            <MenuItem value={schemes[0]}>{schemes[0]}</MenuItem>
-            <MenuItem value={schemes[1]}>{schemes[1]}</MenuItem>
-          </Select>
+          <Tooltip title={error}>
+            <Select
+              size="small"
+              labelId="scheme-select-label"
+              value={scheme}
+              label="Scheme"
+              onChange={(e) => {
+                setScheme(e.target.value);
+              }}
+              sx={{ width: "6em" }}
+              error={alreadyExists}
+            >
+              <MenuItem value={schemes[0]}>{schemes[0]}</MenuItem>
+              <MenuItem value={schemes[1]}>{schemes[1]}</MenuItem>
+            </Select>
+          </Tooltip>
         </FormControl>
         <Stack justifyContent="center">
           <Typography>://</Typography>
         </Stack>
-        <TextField
-          size="small"
-          label="Host"
-          variant="outlined"
-          defaultValue={host}
-          onChange={(e) => setHost(e.target.value)}
-        />
+        <Tooltip title={error}>
+          <TextField
+            size="small"
+            label="Host"
+            variant="outlined"
+            defaultValue={host}
+            onChange={(e) => setHost(e.target.value)}
+            error={alreadyExists}
+          />
+        </Tooltip>
         <Stack justifyContent="center">
           <Typography>:</Typography>
         </Stack>
-        <TextField
-          size="small"
-          label="Port"
-          variant="outlined"
-          sx={{ width: "6em" }}
-          defaultValue={port}
-          onChange={(e) => setPort(parseInt(e.target.value))}
-        />
+        <Tooltip title={error}>
+          <TextField
+            size="small"
+            label="Port"
+            variant="outlined"
+            sx={{ width: "6em" }}
+            defaultValue={port}
+            onChange={(e) => setPort(parseInt(e.target.value))}
+            error={alreadyExists}
+          />
+        </Tooltip>
         <Stack justifyContent="center">
           <Typography>/ws</Typography>
         </Stack>
         <Stack justifyContent="center" />
+
         <TextField
           size="small"
           label="Auth Token"
@@ -89,7 +104,11 @@ export default function ServerEditMask({
           onChange={(e) => setAuthToken(e.target.value)}
         />
       </Stack>
-      <Button variant="contained" onClick={addNewServer}>
+      <Button
+        variant="contained"
+        onClick={addNewServer}
+        disabled={alreadyExists}
+      >
         Add
       </Button>
       <Button
