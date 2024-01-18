@@ -10,9 +10,10 @@ export default function ServerEditPanel({ setEditing }) {
         sx={{ width: "100%" }}
         direction="row"
         justifyContent="space-between"
+        alignItems="center"
       >
-        <ServerEditMask setEditing={setEditing} />
         <StatusIndicator />
+        <ServerEditMask setEditing={setEditing} />
       </Stack>
       <ServerList sx={{ width: "100%" }} />
     </Stack>

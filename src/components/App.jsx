@@ -4,7 +4,7 @@ import SortedMap from "collections/sorted-map";
 import BottomPanel from "./BottomPanel";
 import { toUrl, useServers } from "./ServerManagement";
 import Theme from "./Theme";
-import { Stack } from "@mui/material";
+import { Box, Stack, useTheme } from "@mui/material";
 import SetPanel from "./SetPanel";
 import { sha256 } from "js-sha256";
 import { EditContext } from "./EditButton";
@@ -250,16 +250,31 @@ export default function App() {
     <Theme>
       <EditContext.Provider value={editKontext}>
         <Stack sx={{ width: "100vw", height: "100vh" }}>
+          <Ornament />
           <Stack flexGrow={1} overflow="auto">
             <Stack padding={2}>
               <TopicTree data={data} pdelete={pdelete} />
             </Stack>
           </Stack>
           <SetPanel set={set} />
+          <Ornament />
           <BottomPanel />
         </Stack>
       </EditContext.Provider>
     </Theme>
+  );
+}
+
+function Ornament() {
+  const theme = useTheme();
+  return (
+    <Box
+      sx={{
+        height: "0.1em",
+        width: "100%",
+        backgroundColor: theme.palette.primary.main,
+      }}
+    />
   );
 }
 

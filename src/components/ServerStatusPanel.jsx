@@ -5,7 +5,8 @@ import EditIcon from "@mui/icons-material/Edit";
 
 export default function ServerStatusPanel({ setEditing }) {
   return (
-    <Stack direction="row" justifyContent="space-between">
+    <Stack direction="row" justifyContent="space-between" alignItems="center">
+      <StatusIndicator />
       <Stack direction="row" spacing={2}>
         <ServerSelection />
         <Button
@@ -18,7 +19,6 @@ export default function ServerStatusPanel({ setEditing }) {
           Edit
         </Button>
       </Stack>
-      <StatusIndicator />
     </Stack>
   );
 }
