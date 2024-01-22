@@ -1,6 +1,6 @@
 {
   "name": "worterbuch-explorer",
-  "version": "0.42.9",
+  "version": "0.42.10",
   "author": {
     "name": "Michael Bachmann",
     "email": "mbachmann@bbmsoft.net"
@@ -17,6 +17,7 @@
     "js-sha256": "^0.10.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-router-dom": "^6.21.3",
     "web-vitals": "^2.1.4"
   },
   "devDependencies": {
