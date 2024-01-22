@@ -1,18 +1,29 @@
 import * as React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./components/App";
-// import reportWebVitals from "./reportWebVitals";
 import { StyledEngineProvider } from "@mui/material/styles";
 import ServerManagement from "./components/ServerManagement";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
+
+const router = createBrowserRouter([
+  {
+    path: "/",
+    element: (
+      <>
+        <ServerManagement>
+          <App />
+        </ServerManagement>
+      </>
+    ),
+  },
+]);
 
 async function start() {
   const root = ReactDOM.createRoot(document.getElementById("root"));
   root.render(
     <React.StrictMode>
       <StyledEngineProvider injectFirst>
-        <ServerManagement>
-          <App />
-        </ServerManagement>
+        <RouterProvider router={router} />
       </StyledEngineProvider>
     </React.StrictMode>
   );

@@ -1,4 +1,5 @@
 import React from "react";
+import { useSearchParams } from "react-router-dom";
 
 const ServerContext = React.createContext();
 
@@ -114,6 +115,72 @@ export default function ServerManagement({ children }) {
     setSelectedServer(server);
     persistSelectedServer(server);
   };
+
+  const indexOf = React.useCallback(
+    (server) => {
+      const url = toUrl(server);
+      for (let i = 0; i < knownServers.length; i++) {
+        const otherUrl = toUrl(knownServers[i]);
+        if (otherUrl[0] === url[0] && otherUrl[1] === url[1]) {
+          return i;
+        }
+      }
+      return -1;
+    },
+    [knownServers]
+  );
+
+  let [searchParams, setSearchParams] = useSearchParams();
+
+  const scheme = searchParams.get("scheme") || "ws";
+  const host = searchParams.get("host");
+  const port = searchParams.get("port");
+  const authToken = searchParams.get("authToken");
+
+  React.useEffect(() => {
+    if (host && port) {
+      const server = {
+        scheme,
+        host,
+        port,
+        authToken,
+      };
+      if (!serverAlreadyExists(server)) {
+        addServer(server);
+      } else {
+        const index = indexOf(server);
+
+        if (index >= 0) {
+          selectServer(index);
+        }
+
+        searchParams.delete("scheme");
+        searchParams.delete("host");
+        searchParams.delete("port");
+        searchParams.delete("authToken");
+
+        setSearchParams(searchParams);
+      }
+    } else {
+      searchParams.delete("scheme");
+      searchParams.delete("host");
+      searchParams.delete("port");
+      searchParams.delete("authToken");
+
+      setSearchParams(searchParams);
+    }
+  }, [
+    addServer,
+    authToken,
+    host,
+    indexOf,
+    port,
+    scheme,
+    searchParams,
+    selectedServer,
+    serverAlreadyExists,
+    setSearchParams,
+  ]);
 
   return (
     <ServerContext.Provider
