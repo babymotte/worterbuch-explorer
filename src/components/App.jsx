@@ -4,9 +4,8 @@ import SortedMap from "collections/sorted-map";
 import BottomPanel from "./BottomPanel";
 import { toUrl, useServers } from "./ServerManagement";
 import Theme from "./Theme";
-import { Box, Stack, useTheme } from "@mui/material";
+import { Alert, Box, Snackbar, Stack, useTheme } from "@mui/material";
 import SetPanel from "./SetPanel";
-import { sha256 } from "js-sha256";
 import { EditContext } from "./EditButton";
 
 let transactionId = 1;
@@ -61,6 +60,21 @@ export default function App() {
   const { selectedServer, knownServers, setConnectionStatus } = useServers();
   const [url, authToken] = toUrl(knownServers[selectedServer]);
 
+  const [snackbarOpen, setSnackbarOpen] = React.useState(false);
+  const [snackbarSeverity, setSnackbarSeverity] = React.useState("error");
+  const [snackbarMessage, setSnackbarMessage] = React.useState(null);
+  const handleSnackbarClose = React.useCallback((event, reason) => {
+    if (reason === "clickaway") {
+      return;
+    }
+    setSnackbarOpen(false);
+  }, []);
+  const showSnackbar = React.useCallback((severity, message) => {
+    setSnackbarSeverity(severity);
+    setSnackbarMessage(message);
+    setSnackbarOpen(true);
+  }, []);
+
   const dataRef = React.useRef(new SortedMap());
   const [data, setData] = React.useState(new SortedMap());
   const socketRef = React.useRef();
@@ -98,15 +112,10 @@ export default function App() {
           });
           return;
         }
-        if (msg.welcome.info.authenticationRequired) {
-          console.log("Authenticating ...");
-          const salted = msg.welcome.clientId + authToken;
-          const hash = sha256.create();
-          hash.update(salted);
-          const token = hash.hex();
-          socketRef.current.send(
-            JSON.stringify({ authenticationRequest: { authToken: token } })
-          );
+        if (msg.welcome.info.authorizationRequired) {
+          console.log("Requesting authorization ...");
+          const msg = JSON.stringify({ authorizationRequest: { authToken } });
+          socketRef.current?.send(msg);
         } else {
           transitionState(STATES.HANDSHAKE_COMPLETE, {
             status: "ok",
@@ -114,8 +123,8 @@ export default function App() {
           });
         }
       }
-      if (msg.authenticated) {
-        console.log("Authentication successful");
+      if (msg.authorized) {
+        console.log("Authorization successful");
         transitionState(STATES.HANDSHAKE_COMPLETE, {
           status: "ok",
           message: "Connected to server",
@@ -131,11 +140,10 @@ export default function App() {
         setData(new SortedMap(dataRef.current));
       }
       if (msg.err) {
-        const meta = JSON.parse(msg.err.metadata);
-        window.alert(meta);
+        showSnackbar("error", msg.err.metadata);
       }
     },
-    [authToken, transitionState]
+    [authToken, showSnackbar, transitionState]
   );
 
   React.useEffect(() => {
@@ -194,14 +202,20 @@ export default function App() {
       }
     }
 
-    if (state === STATES.HANDSHAKE_COMPLETE) {
+    if (state === STATES.HANDSHAKE_COMPLETE && socketRef.current) {
       const subscrMsg = {
         pSubscribe: { transactionId: 1, requestPattern: "#", unique: true },
       };
       socketRef.current.send(JSON.stringify(subscrMsg));
-      keepaliveIntervalRef.current = setInterval(() => {
-        socketRef.current.send(JSON.stringify(""));
+      const currentSocket = socketRef.current;
+      let interval = setInterval(() => {
+        if (socketRef.current === currentSocket) {
+          socketRef.current.send(JSON.stringify(""));
+        } else {
+          clearInterval(interval);
+        }
       }, 1000);
+      keepaliveIntervalRef.current = interval;
     }
 
     if (state === STATES.DISCONNECTED) {
@@ -222,13 +236,13 @@ export default function App() {
   }, [clearData, onMessage, state, transitionState, url]);
 
   const set = React.useCallback((key, value) => {
-    socketRef.current.send(
+    socketRef.current?.send(
       JSON.stringify({ set: { transactionId: tid(), key, value } })
     );
   }, []);
 
   const pdelete = React.useCallback((requestPattern) => {
-    socketRef.current.send(
+    socketRef.current?.send(
       JSON.stringify({ pDelete: { transactionId: tid(), requestPattern } })
     );
   }, []);
@@ -260,6 +274,20 @@ export default function App() {
           <Ornament />
           <BottomPanel />
         </Stack>
+        <Snackbar
+          open={snackbarOpen}
+          autoHideDuration={6000}
+          onClose={handleSnackbarClose}
+        >
+          <Alert
+            onClose={handleSnackbarClose}
+            severity={snackbarSeverity}
+            variant="filled"
+            sx={{ width: "100%" }}
+          >
+            {snackbarMessage}
+          </Alert>
+        </Snackbar>
       </EditContext.Provider>
     </Theme>
   );
