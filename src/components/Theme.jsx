@@ -2,6 +2,7 @@ import { CssBaseline, ThemeProvider } from "@mui/material";
 import { grey, teal } from "@mui/material/colors";
 import { createTheme } from "@mui/material/styles";
 import React from "react";
+import { usePersistedState } from "./utils";
 
 const DarkTheme = createTheme({
   palette: {
@@ -29,7 +30,10 @@ const DarkModeContext = React.createContext({
 export const useDarkMode = () => React.useContext(DarkModeContext);
 
 const Theme = ({ children }) => {
-  const [darkMode, setDarkMode] = usePersistedDM();
+  const [darkMode, setDarkMode] = usePersistedState(
+    "worterbuch.explorer.darkMode",
+    true
+  );
 
   const theme = darkMode ? DarkTheme : LightTheme;
 
@@ -44,30 +48,3 @@ const Theme = ({ children }) => {
 };
 
 export default Theme;
-
-function usePersistedDM() {
-  const [dm, setDm] = React.useState(load());
-  const updateDm = (val) => {
-    setDm(val);
-    persist(val);
-  };
-  return [dm, updateDm];
-}
-
-function load() {
-  if (window.localStorage) {
-    const json = window.localStorage.getItem("worterbuch.explorer.darkMode");
-    return json !== "false";
-  } else {
-    return false;
-  }
-}
-
-function persist(val) {
-  if (window.localStorage) {
-    window.localStorage.setItem(
-      "worterbuch.explorer.darkMode",
-      JSON.stringify(Boolean(val))
-    );
-  }
-}

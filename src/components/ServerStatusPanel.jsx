@@ -1,4 +1,4 @@
-import { Button, Stack, Typography } from "@mui/material";
+import { Button, Grid, Stack, Typography } from "@mui/material";
 import ServerSelection from "./ServerSelection";
 import StatusIndicator from "./StatusIndicator";
 import EditIcon from "@mui/icons-material/Edit";
@@ -7,15 +7,19 @@ import ThemeSwitch from "./ThemeSwitch";
 
 export default function ServerStatusPanel({ setEditing }) {
   return (
-    <Stack direction="row" justifyContent="space-between" alignItems="center">
-      <Stack direction="row" spacing={2} alignItems="center">
-        <ThemeSwitch />
-        <Typography>Wörterbuch&nbsp;Explorer&nbsp;v{pkg.version}</Typography>
-      </Stack>
-      <Stack direction="row" spacing={2}>
-        <StatusIndicator />
-        <ServerSelection />
+    <Grid container columnGap={2}>
+      <Grid item xs>
+        <Stack direction="row" spacing={2} alignItems="center">
+          <ThemeSwitch />
+          <Typography>Wörterbuch&nbsp;Explorer&nbsp;v{pkg.version}</Typography>
+          <Stack flexGrow={1} />
+          <StatusIndicator />
+          <ServerSelection />
+        </Stack>
+      </Grid>
+      <Grid item md={2} lg={1}>
         <Button
+          sx={{ width: "100%", height: "100%" }}
           variant="outlined"
           selected
           color="primary"
@@ -24,7 +28,7 @@ export default function ServerStatusPanel({ setEditing }) {
         >
           Edit
         </Button>
-      </Stack>
-    </Stack>
+      </Grid>
+    </Grid>
   );
 }

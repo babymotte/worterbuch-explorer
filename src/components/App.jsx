@@ -29,9 +29,6 @@ function transitionValid(stateRef, newState) {
   if (newState === STATES.SWITCHING_SERVER) {
     return true;
   }
-  if (newState === STATES.SWITCHING_SERVER) {
-    return oldState === STATES.STARTED;
-  }
   if (newState === STATES.CONNECTING) {
     return (
       oldState === STATES.SWITCHING_SERVER || oldState === STATES.RECONNECTING
@@ -57,7 +54,13 @@ function transitionValid(stateRef, newState) {
 }
 
 export default function App() {
-  const { selectedServer, knownServers, setConnectionStatus } = useServers();
+  const {
+    selectedServer,
+    knownServers,
+    setConnectionStatus,
+    subscribe,
+    setSubscribe,
+  } = useServers();
   const [url, authToken] = toUrl(knownServers[selectedServer]);
 
   const [snackbarOpen, setSnackbarOpen] = React.useState(false);
@@ -74,6 +77,10 @@ export default function App() {
     setSnackbarMessage(message);
     setSnackbarOpen(true);
   }, []);
+
+  const rootKeyRef = React.useRef("#");
+
+  const [options, setOptions] = React.useState([]);
 
   const dataRef = React.useRef(new SortedMap());
   const [data, setData] = React.useState(new SortedMap());
@@ -99,6 +106,55 @@ export default function App() {
     dataRef.current = new SortedMap();
     setData(dataRef.current);
   }, []);
+
+  const lsTidRef = React.useRef();
+  const refreshOptions = React.useCallback(() => {
+    const split = rootKeyRef.current.split("/");
+    split.splice(split.length - 1, 1);
+    const parent = split.length > 0 ? split.join("/") : undefined;
+    lsTidRef.current = tid();
+    const lsMsg = {
+      ls: {
+        transactionId: lsTidRef.current,
+        parent,
+      },
+    };
+    socketRef.current?.send(JSON.stringify(lsMsg));
+  }, []);
+
+  const subscriptionTidRef = React.useRef();
+
+  const unsubscribe = React.useCallback(() => {
+    if (socketRef.current && subscriptionTidRef.current) {
+      const unsubscrMsg = {
+        unsubscribe: {
+          transactionId: subscriptionTidRef.current,
+        },
+      };
+      socketRef.current.send(JSON.stringify(unsubscrMsg));
+    }
+  }, []);
+
+  React.useEffect(() => {
+    if (subscribe) {
+      clearData();
+      if (socketRef.current) {
+        subscriptionTidRef.current = tid();
+        const subscrMsg = {
+          pSubscribe: {
+            transactionId: subscriptionTidRef.current,
+            requestPattern: rootKeyRef.current,
+            unique: true,
+          },
+        };
+        socketRef.current.send(JSON.stringify(subscrMsg));
+      } else {
+        setSubscribe(false);
+      }
+    } else {
+      unsubscribe();
+    }
+  }, [clearData, setSubscribe, subscribe, unsubscribe]);
 
   const onMessage = React.useCallback(
     (e) => {
@@ -139,11 +195,32 @@ export default function App() {
         }
         setData(new SortedMap(dataRef.current));
       }
+      if (msg.lsState) {
+        if (lsTidRef.current === msg.lsState.transactionId) {
+          lsTidRef.current = null;
+          const split = rootKeyRef.current.split("/");
+          split.splice(split.length - 1, 1);
+          const parent = split.length > 0 ? split.join("/") : undefined;
+          const options = ["#"];
+          for (const segment of msg.lsState.children) {
+            options.push(parent ? parent + "/" + segment : segment);
+          }
+          setOptions(options);
+        }
+      }
+      if (msg.ack) {
+        if (
+          subscriptionTidRef.current === msg.ack.transactionId &&
+          !subscribe
+        ) {
+          clearData();
+        }
+      }
       if (msg.err) {
         showSnackbar("error", msg.err.metadata);
       }
     },
-    [authToken, showSnackbar, transitionState]
+    [authToken, clearData, showSnackbar, subscribe, transitionState]
   );
 
   React.useEffect(() => {
@@ -152,14 +229,18 @@ export default function App() {
 
   React.useEffect(() => {
     if (state === STATES.SWITCHING_SERVER) {
+      clearData();
+      subscriptionTidRef.current = null;
+
       if (socketRef.current) {
-        clearData();
         socketRef.current.onclose = undefined;
         socketRef.current.onerror = undefined;
         socketRef.current.onmessage = undefined;
         socketRef.current.close();
         socketRef.current = undefined;
       }
+
+      setSubscribe(false);
 
       if (!url) {
         transitionState(STATES.NO_SERVER_SELECTED, {
@@ -203,10 +284,6 @@ export default function App() {
     }
 
     if (state === STATES.HANDSHAKE_COMPLETE && socketRef.current) {
-      const subscrMsg = {
-        pSubscribe: { transactionId: 1, requestPattern: "#", unique: true },
-      };
-      socketRef.current.send(JSON.stringify(subscrMsg));
       const currentSocket = socketRef.current;
       let interval = setInterval(() => {
         if (socketRef.current === currentSocket) {
@@ -219,6 +296,7 @@ export default function App() {
     }
 
     if (state === STATES.DISCONNECTED) {
+      console.log("clearing subscription tid");
       clearInterval(keepaliveIntervalRef.current);
       socketRef.current = undefined;
       setTimeout(
@@ -233,7 +311,7 @@ export default function App() {
     if (state === STATES.RECONNECTING) {
       setTimeout(transitionState(STATES.SWITCHING_SERVER), 1000);
     }
-  }, [clearData, onMessage, state, transitionState, url]);
+  }, [clearData, onMessage, setSubscribe, state, transitionState, url]);
 
   const set = React.useCallback((key, value) => {
     socketRef.current?.send(
@@ -251,7 +329,7 @@ export default function App() {
   const [editValue, setEditValue] = React.useState("");
   const [json, setJson] = React.useState(false);
 
-  const editKontext = {
+  const editContext = {
     setKey: setEditKey,
     setValue: setEditValue,
     key: editKey,
@@ -262,17 +340,21 @@ export default function App() {
 
   return (
     <Theme>
-      <EditContext.Provider value={editKontext}>
+      <EditContext.Provider value={editContext}>
         <Stack sx={{ width: "100vw", height: "100vh" }}>
           <Ornament />
           <Stack flexGrow={1} overflow="auto">
-            <Stack padding={2}>
+            <Stack padding={2} spacing={2}>
               <TopicTree data={data} pdelete={pdelete} />
             </Stack>
           </Stack>
           <SetPanel set={set} />
           <Ornament />
-          <BottomPanel />
+          <BottomPanel
+            rootKeyRef={rootKeyRef}
+            options={options}
+            refreshOptions={refreshOptions}
+          />
         </Stack>
         <Snackbar
           open={snackbarOpen}
