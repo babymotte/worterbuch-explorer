@@ -6,7 +6,6 @@ import SubscriptionBar from "./SubscriptionBar";
 
 export default function BottomPanel() {
   const [editing, setEditing] = React.useState(false);
-
   return (
     <Paper>
       <Stack padding={2} spacing={2}>

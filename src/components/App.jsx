@@ -59,6 +59,7 @@ function transitionValid(stateRef, newState) {
 }
 
 export default function App() {
+  const reconnectTimeoutRef = React.useRef();
   const { selectedServer, knownServers, setConnectionStatus } = useServers();
   const [url, authtoken] = toUrl(knownServers[selectedServer]);
 
@@ -184,6 +185,11 @@ export default function App() {
     }
 
     if (state === STATES.CONNECTING) {
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
+
       connect(url, authtoken)
         .then((wb) => {
           transitionState(STATES.CONNECTED, {
@@ -219,18 +225,26 @@ export default function App() {
     }
 
     if (state === STATES.DISCONNECTED || state === STATES.ERROR) {
-      setTimeout(
-        () =>
-          transitionState(STATES.RECONNECTING, {
-            status: "warning",
-            message: "Trying to reconnect …",
-          }),
-        1000
-      );
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
+      reconnectTimeoutRef.current = setTimeout(() => {
+        reconnectTimeoutRef.current = null;
+        transitionState(STATES.RECONNECTING, {
+          status: "warning",
+          message: "Trying to reconnect …",
+        });
+      }, 1000);
     }
 
     if (state === STATES.RECONNECTING) {
-      setTimeout(() => transitionState(STATES.SWITCHING_SERVER), 2000);
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
+      reconnectTimeoutRef.current = setTimeout(() => {
+        reconnectTimeoutRef.current = null;
+        transitionState(STATES.SWITCHING_SERVER);
+      }, 2000);
     }
   }, [authtoken, clearData, state, transitionState, url]);
 

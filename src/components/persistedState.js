@@ -2,10 +2,14 @@ import React from "react";
 
 export function usePersistedState(key, initialValue) {
   const [state, setState] = React.useState(load(key, initialValue));
-  React.useEffect(() => {
-    persist(key, state);
-  }, [key, state]);
-  return [state, setState];
+  const persistState = React.useCallback(
+    (state) => {
+      persist(key, state);
+      setState(state);
+    },
+    [key]
+  );
+  return [state, persistState];
 }
 
 function persist(key, value) {
