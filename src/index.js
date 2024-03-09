@@ -9,11 +9,9 @@ const router = createBrowserRouter([
   {
     path: "/",
     element: (
-      <>
-        <ServerManagement>
-          <App />
-        </ServerManagement>
-      </>
+      <ServerManagement>
+        <App />
+      </ServerManagement>
     ),
   },
 ]);

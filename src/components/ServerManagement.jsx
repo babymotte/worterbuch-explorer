@@ -1,6 +1,6 @@
 import React from "react";
 import { useSearchParams } from "react-router-dom";
-import { usePersistedState } from "./utils";
+import { usePersistedState } from "./persistedState";
 
 const ServerContext = React.createContext();
 
@@ -135,8 +135,6 @@ export default function ServerManagement({ children }) {
     setSelectedServer,
   ]);
 
-  const [subscribe, setSubscribe] = React.useState(false);
-
   return (
     <ServerContext.Provider
       value={{
@@ -148,8 +146,6 @@ export default function ServerManagement({ children }) {
         connectionStatus,
         setConnectionStatus,
         serverAlreadyExists,
-        subscribe,
-        setSubscribe,
       }}
     >
       {children}

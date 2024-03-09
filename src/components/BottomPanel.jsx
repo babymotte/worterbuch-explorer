@@ -4,17 +4,13 @@ import ServerEditPanel from "./ServerEditPanel";
 import ServerStatusPanel from "./ServerStatusPanel";
 import SubscriptionBar from "./SubscriptionBar";
 
-export default function BottomPanel({ rootKeyRef, options, refreshOptions }) {
+export default function BottomPanel() {
   const [editing, setEditing] = React.useState(false);
 
   return (
     <Paper>
-      <Stack container padding={2} spacing={2}>
-        <SubscriptionBar
-          rootKeyRef={rootKeyRef}
-          options={options}
-          refreshOptions={refreshOptions}
-        />
+      <Stack padding={2} spacing={2}>
+        <SubscriptionBar />
         {editing ? (
           <ServerEditPanel setEditing={setEditing} />
         ) : (

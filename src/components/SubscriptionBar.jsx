@@ -1,92 +1,72 @@
-import { Autocomplete, Button, Grid, TextField } from "@mui/material";
+import { Button, Grid } from "@mui/material";
 import { useServers } from "./ServerManagement";
 import React from "react";
-import { usePersistedState } from "./utils";
+import KeyEditor from "./KeyEditor";
+import { useSubscription } from "./Subscription";
+import { usePersistedState } from "./persistedState";
 
-export default function SubscriptionBar({
-  rootKeyRef,
-  refreshOptions,
-  options,
-}) {
+export default function SubscriptionBar() {
   const {
-    subscribe,
-    setSubscribe,
     connectionStatus: { status },
   } = useServers();
   const connected = status === "ok";
 
+  const { subscribe, unsubscribe } = useSubscription();
+
+  const [subscribed, setSubscribed] = React.useState(false);
   const [rootKey, setRootKey] = usePersistedState(
     "worterbuch.explorer.subscription",
-    rootKeyRef.current
+    "#"
   );
   React.useEffect(() => {
-    rootKeyRef.current = rootKey;
-    refreshOptions();
-  }, [refreshOptions, rootKey, rootKeyRef]);
-
-  const [resubscribe, setResubscribe] = React.useState(false);
-  React.useEffect(() => {
-    if (resubscribe) {
-      setSubscribe(true);
-      setResubscribe(false);
+    if (!connected) {
+      setSubscribed(false);
     }
-  }, [resubscribe, setSubscribe]);
+  }, [connected]);
 
-  const toggleConnected = () => {
-    if (rootKey.length === 0) {
-      setRootKey("#");
-    } else if (!rootKey.endsWith("#")) {
-      if (rootKey.endsWith("/")) {
-        setRootKey(rootKey + "#");
+  const subscribeKey = (key) => {
+    let sanitizedKey = key;
+    if (key.length === 0) {
+      sanitizedKey = "#";
+    } else if (!key.endsWith("#")) {
+      if (key.endsWith("/")) {
+        sanitizedKey = key + "#";
       } else {
-        setRootKey(rootKey + "/#");
+        sanitizedKey = key + "/#";
       }
     }
-    setSubscribe(!subscribe);
+    setRootKey(sanitizedKey);
+    subscribe(sanitizedKey, setSubscribed);
+  };
+
+  const toggleSubscribed = () => {
+    if (subscribed) {
+      unsubscribe(setSubscribed);
+    } else {
+      subscribeKey(rootKey);
+    }
   };
 
   return (
     <Grid container columnGap={2}>
       <Grid item xs>
-        <Autocomplete
-          fullWidth
-          freeSolo
-          disableClearable
-          options={options}
-          inputValue={rootKey}
-          onInputChange={(event, newInputValue) =>
-            setRootKey(newInputValue.trim())
-          }
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              label="Subscription"
-              InputProps={{
-                ...params.InputProps,
-                type: "search",
-              }}
-              size="small"
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && e.ctrlKey) {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  toggleConnected();
-                  setResubscribe(subscribe);
-                }
-              }}
-            />
-          )}
+        <KeyEditor
+          keyStr={rootKey}
+          label="Subscription"
+          onChange={setRootKey}
+          onCommit={subscribeKey}
+          includeRootHash
         />
       </Grid>
 
       <Grid item md={2} lg={1}>
         <Button
           sx={{ width: "100%", height: "100%" }}
-          variant={subscribe ? "outlined" : "contained"}
-          onClick={toggleConnected}
+          variant={subscribed ? "outlined" : "contained"}
+          onClick={toggleSubscribed}
           disabled={!connected}
         >
-          {subscribe ? "Unsubscribe" : "Subscribe"}
+          {subscribed ? "Unsubscribe" : "Subscribe"}
         </Button>
       </Grid>
     </Grid>

@@ -2,7 +2,7 @@ import { CssBaseline, ThemeProvider } from "@mui/material";
 import { grey, teal } from "@mui/material/colors";
 import { createTheme } from "@mui/material/styles";
 import React from "react";
-import { usePersistedState } from "./utils";
+import { usePersistedState } from "./persistedState";
 
 const DarkTheme = createTheme({
   palette: {

@@ -7,19 +7,18 @@ import Theme from "./Theme";
 import { Alert, Box, Snackbar, Stack, useTheme } from "@mui/material";
 import SetPanel from "./SetPanel";
 import { EditContext } from "./EditButton";
-
-let transactionId = 1;
-function tid() {
-  return transactionId++;
-}
+import Subscription from "./Subscription";
+import Worterbuch from "./Worterbuch";
+import { connect } from "worterbuch-js";
 
 const STATES = {
   SWITCHING_SERVER: "SWITCHING_SERVER",
+  SWITCHING_SERVER_CLOSING: "SWITCHING_SERVER_CLOSING",
+  SWITCHING_SERVER_CLOSED: "SWITCHING_SERVER_CLOSED",
   NO_SERVER_SELECTED: "NO_SERVER_SELECTED",
   CONNECTING: "CONNECTING",
   ERROR: "ERROR",
   CONNECTED: "CONNECTED",
-  HANDSHAKE_COMPLETE: "HANDSHAKE_COMPLETE",
   DISCONNECTED: "DISCONNECTED",
   RECONNECTING: "RECONNECTING",
 };
@@ -29,9 +28,20 @@ function transitionValid(stateRef, newState) {
   if (newState === STATES.SWITCHING_SERVER) {
     return true;
   }
+  if (newState === STATES.SWITCHING_SERVER_CLOSING) {
+    return oldState === STATES.SWITCHING_SERVER;
+  }
+  if (newState === STATES.SWITCHING_SERVER_CLOSED) {
+    return (
+      oldState === STATES.SWITCHING_SERVER ||
+      oldState === STATES.SWITCHING_SERVER_CLOSING
+    );
+  }
   if (newState === STATES.CONNECTING) {
     return (
-      oldState === STATES.SWITCHING_SERVER || oldState === STATES.RECONNECTING
+      oldState === STATES.SWITCHING_SERVER ||
+      oldState === STATES.RECONNECTING ||
+      oldState === STATES.SWITCHING_SERVER_CLOSED
     );
   }
   if (newState === STATES.ERROR) {
@@ -40,28 +50,17 @@ function transitionValid(stateRef, newState) {
   if (newState === STATES.CONNECTED) {
     return oldState === STATES.CONNECTING;
   }
-  if (newState === STATES.HANDSHAKE_COMPLETE) {
-    return oldState === STATES.CONNECTED;
-  }
   if (newState === STATES.DISCONNECTED) {
-    return (
-      oldState === STATES.CONNECTED || oldState === STATES.HANDSHAKE_COMPLETE
-    );
+    return oldState === STATES.CONNECTED || STATES.CONNECTING;
   }
   if (newState === STATES.RECONNECTING) {
-    return oldState === STATES.DISCONNECTED;
+    return oldState === STATES.DISCONNECTED || oldState === STATES.ERROR;
   }
 }
 
 export default function App() {
-  const {
-    selectedServer,
-    knownServers,
-    setConnectionStatus,
-    subscribe,
-    setSubscribe,
-  } = useServers();
-  const [url, authToken] = toUrl(knownServers[selectedServer]);
+  const { selectedServer, knownServers, setConnectionStatus } = useServers();
+  const [url, authtoken] = toUrl(knownServers[selectedServer]);
 
   const [snackbarOpen, setSnackbarOpen] = React.useState(false);
   const [snackbarSeverity, setSnackbarSeverity] = React.useState("error");
@@ -78,14 +77,13 @@ export default function App() {
     setSnackbarOpen(true);
   }, []);
 
-  const rootKeyRef = React.useRef("#");
-
-  const [options, setOptions] = React.useState([]);
-
   const dataRef = React.useRef(new SortedMap());
   const [data, setData] = React.useState(new SortedMap());
-  const socketRef = React.useRef();
-  const keepaliveIntervalRef = React.useRef();
+  const clearData = React.useCallback(() => {
+    dataRef.current = new SortedMap();
+    setData(dataRef.current);
+  }, []);
+
   const stateRef = React.useRef(STATES.STARTED);
   const [state, setState] = React.useState(stateRef.current);
   const transitionState = React.useCallback(
@@ -102,125 +100,51 @@ export default function App() {
     [setConnectionStatus]
   );
 
-  const clearData = React.useCallback(() => {
-    dataRef.current = new SortedMap();
-    setData(dataRef.current);
-  }, []);
-
-  const lsTidRef = React.useRef();
-  const refreshOptions = React.useCallback(() => {
-    const split = rootKeyRef.current.split("/");
-    split.splice(split.length - 1, 1);
-    const parent = split.length > 0 ? split.join("/") : undefined;
-    lsTidRef.current = tid();
-    const lsMsg = {
-      ls: {
-        transactionId: lsTidRef.current,
-        parent,
-      },
-    };
-    socketRef.current?.send(JSON.stringify(lsMsg));
-  }, []);
+  const [wb, setWb] = React.useState();
+  const wbRef = React.useRef();
 
   const subscriptionTidRef = React.useRef();
-
-  const unsubscribe = React.useCallback(() => {
-    if (socketRef.current && subscriptionTidRef.current) {
-      const unsubscrMsg = {
-        unsubscribe: {
-          transactionId: subscriptionTidRef.current,
-        },
-      };
-      socketRef.current.send(JSON.stringify(unsubscrMsg));
-    }
-  }, []);
-
-  React.useEffect(() => {
-    if (subscribe) {
+  const unsubscribe = React.useCallback(
+    (subscribed) => {
+      if (wb && subscriptionTidRef.current) {
+        wb.unsubscribe(subscriptionTidRef.current);
+        subscriptionTidRef.current = null;
+      }
+      subscribed(false);
+    },
+    [wb]
+  );
+  const subscribe = React.useCallback(
+    (requestPattern, subscribed) => {
+      unsubscribe(subscribed);
       clearData();
-      if (socketRef.current) {
-        subscriptionTidRef.current = tid();
-        const subscrMsg = {
-          pSubscribe: {
-            transactionId: subscriptionTidRef.current,
-            requestPattern: rootKeyRef.current,
-            unique: true,
+      if (wb) {
+        subscriptionTidRef.current = wb.pSubscribe(
+          requestPattern,
+          ({ keyValuePairs, deleted }) => {
+            if (stateRef.current === STATES.CONNECTED) {
+              if (keyValuePairs) {
+                mergeKeyValuePairs(keyValuePairs, dataRef.current);
+              }
+              if (deleted) {
+                removeKeyValuePairs(deleted, dataRef.current);
+              }
+              setData(new SortedMap(dataRef.current));
+            }
           },
-        };
-        socketRef.current.send(JSON.stringify(subscrMsg));
-      } else {
-        setSubscribe(false);
-      }
-    } else {
-      unsubscribe();
-    }
-  }, [clearData, setSubscribe, subscribe, unsubscribe]);
-
-  const onMessage = React.useCallback(
-    (e) => {
-      const msg = JSON.parse(e.data);
-      if (msg.welcome) {
-        const supportedVersions = ["0.7"];
-        if (!supportedVersions.includes(msg.welcome.info.protocolVersion)) {
-          transitionState(STATES.ERROR, {
-            status: "error",
-            message: `Protocol version ${msg.welcome.info.protocolVersion} is not supported!`,
-          });
-          return;
-        }
-        if (msg.welcome.info.authorizationRequired) {
-          console.log("Requesting authorization ...");
-          const msg = JSON.stringify({ authorizationRequest: { authToken } });
-          socketRef.current?.send(msg);
-        } else {
-          transitionState(STATES.HANDSHAKE_COMPLETE, {
-            status: "ok",
-            message: "Connected to server",
-          });
-        }
-      }
-      if (msg.authorized) {
-        console.log("Authorization successful");
-        transitionState(STATES.HANDSHAKE_COMPLETE, {
-          status: "ok",
-          message: "Connected to server",
-        });
-      }
-      if (msg.pState) {
-        if (msg.pState.keyValuePairs) {
-          mergeKeyValuePairs(msg.pState.keyValuePairs, dataRef.current);
-        }
-        if (msg.pState.deleted) {
-          removeKeyValuePairs(msg.pState.deleted, dataRef.current);
-        }
-        setData(new SortedMap(dataRef.current));
-      }
-      if (msg.lsState) {
-        if (lsTidRef.current === msg.lsState.transactionId) {
-          lsTidRef.current = null;
-          const split = rootKeyRef.current.split("/");
-          split.splice(split.length - 1, 1);
-          const parent = split.length > 0 ? split.join("/") : undefined;
-          const options = ["#"];
-          for (const segment of msg.lsState.children) {
-            options.push(parent ? parent + "/" + segment : segment);
+          true,
+          false,
+          (err) => {
+            showSnackbar("error", err.metadata);
+            subscribed(false);
           }
-          setOptions(options);
-        }
-      }
-      if (msg.ack) {
-        if (
-          subscriptionTidRef.current === msg.ack.transactionId &&
-          !subscribe
-        ) {
-          clearData();
-        }
-      }
-      if (msg.err) {
-        showSnackbar("error", msg.err.metadata);
+        );
+        subscribed(true);
+      } else {
+        subscribed(false);
       }
     },
-    [authToken, clearData, showSnackbar, subscribe, transitionState]
+    [clearData, showSnackbar, unsubscribe, wb]
   );
 
   React.useEffect(() => {
@@ -229,19 +153,22 @@ export default function App() {
 
   React.useEffect(() => {
     if (state === STATES.SWITCHING_SERVER) {
-      clearData();
-      subscriptionTidRef.current = null;
-
-      if (socketRef.current) {
-        socketRef.current.onclose = undefined;
-        socketRef.current.onerror = undefined;
-        socketRef.current.onmessage = undefined;
-        socketRef.current.close();
-        socketRef.current = undefined;
+      if (wbRef.current) {
+        wbRef.current.close();
+        transitionState(STATES.SWITCHING_SERVER_CLOSING, {
+          status: "warning",
+          message: "Closing connection",
+        });
+      } else {
+        transitionState(STATES.CONNECTING, {
+          status: "warning",
+          message: "Connecting to server …",
+        });
       }
+      subscriptionTidRef.current = null;
+    }
 
-      setSubscribe(false);
-
+    if (state === STATES.SWITCHING_SERVER_CLOSED) {
       if (!url) {
         transitionState(STATES.NO_SERVER_SELECTED, {
           status: "warning",
@@ -254,76 +181,76 @@ export default function App() {
         status: "warning",
         message: "Connecting to server …",
       });
+    }
 
-      try {
-        const ws = new WebSocket(url);
-        ws.onopen = () =>
+    if (state === STATES.CONNECTING) {
+      connect(url, authtoken)
+        .then((wb) => {
           transitionState(STATES.CONNECTED, {
-            status: "warning",
-            message: "WebSocket opened, waiting for welcome message …",
+            status: "ok",
+            message: "Connected to server",
           });
-        ws.onerror = () =>
+          wb.onclose = () => {
+            clearData();
+            wbRef.current = null;
+            setWb(null);
+            if (stateRef.current === STATES.SWITCHING_SERVER_CLOSING) {
+              transitionState(STATES.SWITCHING_SERVER_CLOSED, {
+                status: "warning",
+                message: "Connection closed",
+              });
+            } else {
+              transitionState(STATES.DISCONNECTED, {
+                status: "error",
+                message: "Disconnected from server",
+              });
+            }
+          };
+          wbRef.current = wb;
+          setWb(wb);
+        })
+        .catch((err) => {
+          console.error(err);
           transitionState(STATES.ERROR, {
             status: "error",
-            message: "Could not connect to server",
+            message: "Could not connect",
           });
-        ws.onclose = () => {
-          transitionState(STATES.DISCONNECTED, {
-            status: "error",
-            message: "Disconnected from server",
-          });
-        };
-        ws.onmessage = onMessage;
-        socketRef.current = ws;
-      } catch {
-        transitionState(STATES.ERROR, {
-          status: "warning",
-          message: "Invalid URL!",
         });
-      }
     }
 
-    if (state === STATES.HANDSHAKE_COMPLETE && socketRef.current) {
-      const currentSocket = socketRef.current;
-      let interval = setInterval(() => {
-        if (socketRef.current === currentSocket) {
-          socketRef.current.send(JSON.stringify(""));
-        } else {
-          clearInterval(interval);
-        }
-      }, 1000);
-      keepaliveIntervalRef.current = interval;
-    }
-
-    if (state === STATES.DISCONNECTED) {
-      console.log("clearing subscription tid");
-      clearInterval(keepaliveIntervalRef.current);
-      socketRef.current = undefined;
+    if (state === STATES.DISCONNECTED || state === STATES.ERROR) {
       setTimeout(
-        transitionState(STATES.RECONNECTING, {
-          status: "ok",
-          message: "Trying to reconnect …",
-        }),
-        2500
+        () =>
+          transitionState(STATES.RECONNECTING, {
+            status: "warning",
+            message: "Trying to reconnect …",
+          }),
+        1000
       );
     }
 
     if (state === STATES.RECONNECTING) {
-      setTimeout(transitionState(STATES.SWITCHING_SERVER), 1000);
+      setTimeout(() => transitionState(STATES.SWITCHING_SERVER), 2000);
     }
-  }, [clearData, onMessage, setSubscribe, state, transitionState, url]);
+  }, [authtoken, clearData, state, transitionState, url]);
 
-  const set = React.useCallback((key, value) => {
-    socketRef.current?.send(
-      JSON.stringify({ set: { transactionId: tid(), key, value } })
-    );
-  }, []);
+  const set = React.useCallback(
+    (key, value) => {
+      if (wb) {
+        wb.set(key, value);
+      }
+    },
+    [wb]
+  );
 
-  const pdelete = React.useCallback((requestPattern) => {
-    socketRef.current?.send(
-      JSON.stringify({ pDelete: { transactionId: tid(), requestPattern } })
-    );
-  }, []);
+  const pdelete = React.useCallback(
+    (requestPattern) => {
+      if (wb) {
+        wb.pDelete(requestPattern);
+      }
+    },
+    [wb]
+  );
 
   const [editKey, setEditKey] = React.useState("");
   const [editValue, setEditValue] = React.useState("");
@@ -340,37 +267,37 @@ export default function App() {
 
   return (
     <Theme>
-      <EditContext.Provider value={editContext}>
-        <Stack sx={{ width: "100vw", height: "100vh" }}>
-          <Ornament />
-          <Stack flexGrow={1} overflow="auto">
-            <Stack padding={2} spacing={2}>
-              <TopicTree data={data} pdelete={pdelete} />
+      <Worterbuch wb={wb}>
+        <Subscription subscribe={subscribe} unsubscribe={unsubscribe}>
+          <EditContext.Provider value={editContext}>
+            <Stack sx={{ width: "100vw", height: "100vh" }}>
+              <Ornament />
+              <Stack flexGrow={1} overflow="auto">
+                <Stack padding={2} spacing={2}>
+                  <TopicTree data={data} pdelete={pdelete} />
+                </Stack>
+              </Stack>
+              <SetPanel set={set} />
+              <Ornament />
+              <BottomPanel />
             </Stack>
-          </Stack>
-          <SetPanel set={set} />
-          <Ornament />
-          <BottomPanel
-            rootKeyRef={rootKeyRef}
-            options={options}
-            refreshOptions={refreshOptions}
-          />
-        </Stack>
-        <Snackbar
-          open={snackbarOpen}
-          autoHideDuration={6000}
-          onClose={handleSnackbarClose}
-        >
-          <Alert
-            onClose={handleSnackbarClose}
-            severity={snackbarSeverity}
-            variant="filled"
-            sx={{ width: "100%" }}
-          >
-            {snackbarMessage}
-          </Alert>
-        </Snackbar>
-      </EditContext.Provider>
+            <Snackbar
+              open={snackbarOpen}
+              autoHideDuration={6000}
+              onClose={handleSnackbarClose}
+            >
+              <Alert
+                onClose={handleSnackbarClose}
+                severity={snackbarSeverity}
+                variant="filled"
+                sx={{ width: "100%" }}
+              >
+                {snackbarMessage}
+              </Alert>
+            </Snackbar>
+          </EditContext.Provider>
+        </Subscription>
+      </Worterbuch>
     </Theme>
   );
 }
