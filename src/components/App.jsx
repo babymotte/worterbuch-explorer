@@ -112,8 +112,9 @@ export default function App() {
         subscriptionTidRef.current = null;
       }
       subscribed(false);
+      clearData();
     },
-    [wb]
+    [clearData, wb]
   );
   const subscribe = React.useCallback(
     (requestPattern, subscribed) => {

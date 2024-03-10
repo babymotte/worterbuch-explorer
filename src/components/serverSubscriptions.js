@@ -2,8 +2,7 @@ import React from "react";
 import { toUrl, useServers } from "./ServerManagement";
 import { usePersistedState } from "./persistedState";
 
-export default function useServerSubscriptions() {
-  const { selectedServer, knownServers } = useServers();
+export function useSubscriptionsForServer(selectedServer, knownServers) {
   const server = knownServers[selectedServer];
   const url = toUrl(server);
 
@@ -37,4 +36,9 @@ export default function useServerSubscriptions() {
   );
 
   return { subscription, setSubscription, autoSubscribe, setAutoSubscribe };
+}
+
+export default function useServerSubscriptions() {
+  const { selectedServer, knownServers } = useServers();
+  return useSubscriptionsForServer(selectedServer, knownServers);
 }

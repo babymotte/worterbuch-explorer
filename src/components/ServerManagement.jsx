@@ -1,5 +1,5 @@
 import React from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { usePersistedState } from "./persistedState";
 
 const ServerContext = React.createContext();
@@ -135,12 +135,21 @@ export default function ServerManagement({ children }) {
     setSelectedServer,
   ]);
 
+  const navigate = useNavigate();
+  const selectServer = React.useCallback(
+    (i) => {
+      navigate("/");
+      setSelectedServer(i);
+    },
+    [navigate, setSelectedServer]
+  );
+
   return (
     <ServerContext.Provider
       value={{
         selectedServer,
         knownServers,
-        selectServer: setSelectedServer,
+        selectServer,
         addServer,
         removeServer,
         connectionStatus,

@@ -11,6 +11,7 @@ import React from "react";
 import KeyEditor from "./KeyEditor";
 import { useSubscription } from "./Subscription";
 import useServerSubscriptions from "./serverSubscriptions";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
 export default function SubscriptionBar() {
   const {
@@ -27,8 +28,19 @@ export default function SubscriptionBar() {
     }
   }, [connected]);
 
-  const { subscription, setSubscription, autoSubscribe, setAutoSubscribe } =
-    useServerSubscriptions();
+  const {
+    subscription: storedSubscription,
+    setSubscription,
+    autoSubscribe: storedAutoSubscribe,
+    setAutoSubscribe,
+  } = useServerSubscriptions();
+
+  const location = useLocation();
+  const subscription = getSubscriptionFromPath(location, storedSubscription);
+  const navigate = useNavigate();
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const autoSubscribe = getAutoSubscribe(searchParams, storedAutoSubscribe);
 
   const [pattern, setPattern] = React.useState("#");
   React.useEffect(() => {
@@ -49,12 +61,26 @@ export default function SubscriptionBar() {
       }
       setSubscription(sanitizedKey);
       subscribe(sanitizedKey, setSubscribed);
+      const path = "/" + sanitizedKey;
+      navigate(path);
+      searchParams.set("autoSubscribe", autoSubscribe ? "1" : "0");
+      setSearchParams(searchParams);
     },
-    [setSubscription, subscribe]
+    [
+      autoSubscribe,
+      navigate,
+      searchParams,
+      setSearchParams,
+      setSubscription,
+      subscribe,
+    ]
   );
 
   const toggleSubscribed = () => {
     if (subscribed) {
+      setAutoSubscribe(false);
+      searchParams.set("autoSubscribe", "0");
+      setSearchParams(searchParams);
       unsubscribe(setSubscribed);
     } else {
       subscribeKey(pattern);
@@ -88,7 +114,14 @@ export default function SubscriptionBar() {
               control={
                 <Checkbox
                   checked={autoSubscribe}
-                  onChange={(e) => setAutoSubscribe(e.target.checked)}
+                  onChange={(e) => {
+                    searchParams.set(
+                      "autoSubscribe",
+                      e.target.checked ? "1" : "0"
+                    );
+                    setSearchParams(searchParams);
+                    setAutoSubscribe(e.target.checked);
+                  }}
                 />
               }
               label="Auto"
@@ -109,4 +142,19 @@ export default function SubscriptionBar() {
       </Grid>
     </Grid>
   );
+}
+
+function getSubscriptionFromPath(location, storedSubscription) {
+  if (location.pathname === "/") {
+    return storedSubscription;
+  }
+  return location.pathname.slice(1) + "#";
+}
+
+function getAutoSubscribe(searchParams, storedAutoSubscribe) {
+  const autoSubscribe = searchParams.get("autoSubscribe");
+  if (autoSubscribe !== undefined && autoSubscribe !== null) {
+    return autoSubscribe === "1";
+  }
+  return storedAutoSubscribe;
 }
