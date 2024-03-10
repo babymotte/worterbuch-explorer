@@ -44,6 +44,12 @@ function transitionValid(stateRef, newState) {
       oldState === STATES.SWITCHING_SERVER_CLOSED
     );
   }
+  if (newState === STATES.NO_SERVER_SELECTED) {
+    return (
+      oldState === STATES.SWITCHING_SERVER ||
+      oldState === STATES.SWITCHING_SERVER_CLOSED
+    );
+  }
   if (newState === STATES.ERROR) {
     return oldState === STATES.CONNECTING || oldState === STATES.CONNECTED;
   }
@@ -103,6 +109,21 @@ export default function App() {
 
   const [wb, setWb] = React.useState();
   const wbRef = React.useRef();
+  React.useEffect(() => {
+    if (wb === null) {
+      if (stateRef.current === STATES.SWITCHING_SERVER_CLOSING) {
+        transitionState(STATES.SWITCHING_SERVER_CLOSED, {
+          status: "warning",
+          message: "Connection closed",
+        });
+      } else {
+        transitionState(STATES.DISCONNECTED, {
+          status: "error",
+          message: "Disconnected from server",
+        });
+      }
+    }
+  }, [transitionState, wb]);
 
   const subscriptionTidRef = React.useRef();
   const unsubscribe = React.useCallback(
@@ -162,6 +183,14 @@ export default function App() {
           message: "Closing connection",
         });
       } else {
+        if (!url) {
+          transitionState(STATES.NO_SERVER_SELECTED, {
+            status: "warning",
+            message: "No server selected",
+          });
+          return;
+        }
+
         transitionState(STATES.CONNECTING, {
           status: "warning",
           message: "Connecting to server …",
@@ -201,17 +230,6 @@ export default function App() {
             clearData();
             wbRef.current = null;
             setWb(null);
-            if (stateRef.current === STATES.SWITCHING_SERVER_CLOSING) {
-              transitionState(STATES.SWITCHING_SERVER_CLOSED, {
-                status: "warning",
-                message: "Connection closed",
-              });
-            } else {
-              transitionState(STATES.DISCONNECTED, {
-                status: "error",
-                message: "Disconnected from server",
-              });
-            }
           };
           wbRef.current = wb;
           setWb(wb);
@@ -229,13 +247,15 @@ export default function App() {
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
       }
-      reconnectTimeoutRef.current = setTimeout(() => {
-        reconnectTimeoutRef.current = null;
-        transitionState(STATES.RECONNECTING, {
-          status: "warning",
-          message: "Trying to reconnect …",
-        });
-      }, 1000);
+      if (selectedServer < knownServers.length) {
+        reconnectTimeoutRef.current = setTimeout(() => {
+          reconnectTimeoutRef.current = null;
+          transitionState(STATES.RECONNECTING, {
+            status: "warning",
+            message: "Trying to reconnect …",
+          });
+        }, 1000);
+      }
     }
 
     if (state === STATES.RECONNECTING) {
@@ -247,7 +267,15 @@ export default function App() {
         transitionState(STATES.SWITCHING_SERVER);
       }, 2000);
     }
-  }, [authtoken, clearData, state, transitionState, url]);
+  }, [
+    authtoken,
+    clearData,
+    knownServers.length,
+    selectedServer,
+    state,
+    transitionState,
+    url,
+  ]);
 
   const set = React.useCallback(
     (key, value) => {
