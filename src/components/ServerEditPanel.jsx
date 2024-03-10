@@ -47,8 +47,9 @@ export default function ServerEditPanel({ setEditing }) {
     <Stack alignItems="flex-start">
       <Divider flexItem orientation="horizontal" />
       <ServerList sx={{ width: "100%" }} />
-      <Grid container columnGap={2}>
-        <Grid item container xs>
+      <Divider flexItem orientation="horizontal" />
+      <Grid container columnGap={2} paddingTop={2}>
+        <Grid item container xs columnGap={2}>
           <Grid item>
             <Stack direction="row" spacing={2} alignItems="center">
               <ThemeSwitch />
@@ -61,7 +62,7 @@ export default function ServerEditPanel({ setEditing }) {
             <Stack
               direction="row"
               spacing={2}
-              alignItems="center"
+              justifyContent="flex-end"
               sx={{ height: "100%", width: "100%" }}
             >
               <StatusIndicator />
