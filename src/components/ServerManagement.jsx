@@ -144,6 +144,13 @@ export default function ServerManagement({ children }) {
     [navigate, setSelectedServer]
   );
 
+  React.useEffect(() => {
+    const server = knownServers[selectedServer];
+    document.title = server
+      ? `Wörterbuch Explorer - ${server.host}`
+      : "Wörterbuch Explorer";
+  }, [knownServers, selectedServer]);
+
   return (
     <ServerContext.Provider
       value={{
