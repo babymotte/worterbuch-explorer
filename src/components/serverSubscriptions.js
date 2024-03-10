@@ -4,7 +4,7 @@ import { usePersistedState } from "./persistedState";
 
 export function useSubscriptionsForServer(selectedServer, knownServers) {
   const server = knownServers[selectedServer];
-  const url = toUrl(server);
+  const [url] = toUrl(server);
 
   const subscriptionsKey = `worterbuch.explorer.subscriptions`;
   const autoSubscribesKey = `worterbuch.explorer.autoSubscribes`;

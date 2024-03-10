@@ -25,14 +25,20 @@ const STORAGE_KEY_SERVERS = "worterbuch.explorer.knownServers";
 const STORAGE_KEY_SELECTED = "worterbuch.explorer.server";
 
 export default function ServerManagement({ children }) {
+  const navigate = useNavigate();
   const [selectedServer, setSelectedServer] = usePersistedState(
     STORAGE_KEY_SELECTED,
-    0
+    -1
   );
   const [knownServers, setKnownServers] = usePersistedState(
     STORAGE_KEY_SERVERS,
     []
   );
+  React.useEffect(() => {
+    if (selectedServer >= knownServers.length) {
+      setSelectedServer(knownServers.length - 1);
+    }
+  }, [knownServers.length, selectedServer, setSelectedServer]);
   const [connectionStatus, setConnectionStatus] = React.useState({
     status: "warning",
     message: "Connecting to server …",
@@ -80,11 +86,14 @@ export default function ServerManagement({ children }) {
   );
   const removeServer = React.useCallback(
     (server) => {
+      if (server === selectedServer) {
+        navigate("/");
+      }
       const newServers = [...knownServers];
       newServers.splice(server, 1);
       setKnownServers(newServers);
     },
-    [knownServers, setKnownServers]
+    [knownServers, navigate, selectedServer, setKnownServers]
   );
 
   const indexOf = React.useCallback(
@@ -148,7 +157,6 @@ export default function ServerManagement({ children }) {
     setSelectedServer,
   ]);
 
-  const navigate = useNavigate();
   const selectServer = React.useCallback(
     (i) => {
       const server = knownServers[i];
