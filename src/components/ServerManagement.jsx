@@ -37,11 +37,29 @@ export default function ServerManagement({ children }) {
     status: "warning",
     message: "Connecting to server …",
   });
+  const getExistingServer = React.useCallback(
+    (server) => {
+      for (const s of knownServers) {
+        if (
+          server.scheme === s.scheme &&
+          server.host === s.host &&
+          server.port === s.port
+        ) {
+          return s;
+        }
+      }
+      return null;
+    },
+    [knownServers]
+  );
   const serverAlreadyExists = React.useCallback(
     (server) => {
-      const url = toUrl(server)[0];
       for (const s of knownServers) {
-        if (toUrl(s)[0] === url) {
+        if (
+          server.scheme === s.scheme &&
+          server.host === s.host &&
+          server.port === s.port
+        ) {
           return true;
         }
       }
@@ -87,44 +105,33 @@ export default function ServerManagement({ children }) {
 
   const scheme = searchParams.get("scheme") || "ws";
   const host = searchParams.get("host");
-  const port = searchParams.get("port");
+  const port =
+    Number.parseInt(searchParams.get("port")) || (scheme === "wss" ? 443 : 80);
   const authToken = searchParams.get("authToken");
 
   React.useEffect(() => {
-    if (host && port) {
+    if (host) {
       const server = {
         scheme,
         host,
         port,
         authToken,
       };
-      if (!serverAlreadyExists(server)) {
+      let s = getExistingServer(server);
+      if (s === null) {
         addServer(server);
-      } else {
-        const index = indexOf(server);
-
-        if (index >= 0) {
-          setSelectedServer(index);
-        }
-
-        searchParams.delete("scheme");
-        searchParams.delete("host");
-        searchParams.delete("port");
-        searchParams.delete("authToken");
-
-        setSearchParams(searchParams);
+        s = server;
       }
-    } else {
-      searchParams.delete("scheme");
-      searchParams.delete("host");
-      searchParams.delete("port");
-      searchParams.delete("authToken");
+      const index = indexOf(s);
 
-      setSearchParams(searchParams);
+      if (index >= 0) {
+        setSelectedServer(index);
+      }
     }
   }, [
     addServer,
     authToken,
+    getExistingServer,
     host,
     indexOf,
     port,
@@ -138,10 +145,23 @@ export default function ServerManagement({ children }) {
   const navigate = useNavigate();
   const selectServer = React.useCallback(
     (i) => {
+      const server = knownServers[i];
+      if (server) {
+        searchParams.set("scheme", server.scheme);
+        searchParams.set("host", server.host);
+        searchParams.set("port", server.port);
+        searchParams.delete("authToken");
+      } else {
+        searchParams.delete("scheme");
+        searchParams.delete("host");
+        searchParams.delete("port");
+        searchParams.delete("authToken");
+      }
       navigate("/");
+      setSearchParams(searchParams);
       setSelectedServer(i);
     },
-    [navigate, setSelectedServer]
+    [knownServers, navigate, searchParams, setSearchParams, setSelectedServer]
   );
 
   React.useEffect(() => {

@@ -45,7 +45,6 @@ export default function ServerEditPanel({ setEditing }) {
 
   return (
     <Stack alignItems="flex-start">
-      <Divider flexItem orientation="horizontal" />
       <ServerList sx={{ width: "100%" }} />
       <Divider flexItem orientation="horizontal" />
       <Grid container columnGap={2} paddingTop={2}>

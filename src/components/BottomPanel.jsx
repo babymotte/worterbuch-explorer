@@ -9,12 +9,13 @@ export default function BottomPanel() {
   return (
     <Paper>
       <Stack padding={2} spacing={2}>
-        <SubscriptionBar />
         {editing ? (
           <ServerEditPanel setEditing={setEditing} />
         ) : (
           <ServerStatusPanel setEditing={setEditing} />
         )}
+
+        <SubscriptionBar />
       </Stack>
     </Paper>
   );
