@@ -199,6 +199,7 @@ function updateSearchParams(server, searchParams) {
     searchParams.set("host", server.host);
     searchParams.set("port", server.port);
     searchParams.delete("authToken");
+    searchParams.delete("autoSubscribe");
   } else {
     searchParams.delete("scheme");
     searchParams.delete("host");

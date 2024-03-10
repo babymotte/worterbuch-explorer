@@ -41,6 +41,9 @@ export default function SubscriptionBar() {
 
   const [searchParams, setSearchParams] = useSearchParams();
   const autoSubscribe = getAutoSubscribe(searchParams, storedAutoSubscribe);
+  React.useEffect(() => {
+    setSearchParams(searchParams);
+  }, [searchParams, setSearchParams]);
 
   const [pattern, setPattern] = React.useState("#");
   React.useEffect(() => {
@@ -156,5 +159,6 @@ function getAutoSubscribe(searchParams, storedAutoSubscribe) {
   if (autoSubscribe !== undefined && autoSubscribe !== null) {
     return autoSubscribe === "1";
   }
+  searchParams.set("autoSubscribe", storedAutoSubscribe ? "1" : "0");
   return storedAutoSubscribe;
 }
