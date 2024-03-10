@@ -127,6 +127,10 @@ export default function ServerManagement({ children }) {
       if (index >= 0) {
         setSelectedServer(index);
       }
+    } else {
+      const server = knownServers[selectedServer];
+      updateSearchParams(server, searchParams);
+      setSearchParams(searchParams);
     }
   }, [
     addServer,
@@ -134,9 +138,11 @@ export default function ServerManagement({ children }) {
     getExistingServer,
     host,
     indexOf,
+    knownServers,
     port,
     scheme,
     searchParams,
+    selectedServer,
     serverAlreadyExists,
     setSearchParams,
     setSelectedServer,
@@ -146,17 +152,7 @@ export default function ServerManagement({ children }) {
   const selectServer = React.useCallback(
     (i) => {
       const server = knownServers[i];
-      if (server) {
-        searchParams.set("scheme", server.scheme);
-        searchParams.set("host", server.host);
-        searchParams.set("port", server.port);
-        searchParams.delete("authToken");
-      } else {
-        searchParams.delete("scheme");
-        searchParams.delete("host");
-        searchParams.delete("port");
-        searchParams.delete("authToken");
-      }
+      updateSearchParams(server, searchParams);
       navigate("/");
       setSearchParams(searchParams);
       setSelectedServer(i);
@@ -187,4 +183,18 @@ export default function ServerManagement({ children }) {
       {children}
     </ServerContext.Provider>
   );
+}
+
+function updateSearchParams(server, searchParams) {
+  if (server) {
+    searchParams.set("scheme", server.scheme);
+    searchParams.set("host", server.host);
+    searchParams.set("port", server.port);
+    searchParams.delete("authToken");
+  } else {
+    searchParams.delete("scheme");
+    searchParams.delete("host");
+    searchParams.delete("port");
+    searchParams.delete("authToken");
+  }
 }
