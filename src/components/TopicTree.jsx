@@ -3,7 +3,7 @@ import TreeView from "@mui/lab/TreeView";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import TreeItem from "@mui/lab/TreeItem";
-import { Stack, Tooltip, Typography } from "@mui/material";
+import { Link, Stack, Tooltip, Typography } from "@mui/material";
 import DeleteButton from "./DeleteButton";
 import CopyButton from "./CopyButton";
 import EditButton from "./EditButton";
@@ -45,7 +45,7 @@ function toTreeItem(path, item, id, pdelete) {
     const label = (
       <Stack direction="row" justifyContent="space-between" alignItems="center">
         {item.value !== undefined ? (
-          <Label id={id} value={item.value} />
+          <Label path={path} id={id} value={item.value} />
         ) : (
           <Typography display="inline-block">{id}</Typography>
         )}
@@ -74,7 +74,7 @@ function toTreeItem(path, item, id, pdelete) {
   }
 }
 
-function Label({ id, value }) {
+function Label({ path, id, value }) {
   const text = JSON.stringify(value);
   const tooltipText = JSON.stringify(value, null, 2);
 
@@ -104,13 +104,41 @@ function Label({ id, value }) {
         <Typography display="inline-block" whiteSpace="nowrap">
           {id} ={" "}
         </Typography>
+        <ValueRenderer path={path} value={value} shortValue={shortValue} />
+      </Stack>
+    </Tooltip>
+  );
+}
+
+function ValueRenderer({ path, value, shortValue }) {
+  if (typeof value === "string" && value.startsWith("@")) {
+    let hrf = toHref(path, value);
+    return (
+      <Link href={hrf}>
         <Typography
           display="inline-block"
           style={{ fontWeight: 600, marginInlineStart: 4 }}
         >
           {shortValue}
         </Typography>
-      </Stack>
-    </Tooltip>
-  );
+      </Link>
+    );
+  } else {
+    return (
+      <Typography
+        display="inline-block"
+        style={{ fontWeight: 600, marginInlineStart: 4 }}
+      >
+        {shortValue}
+      </Typography>
+    );
+  }
+}
+
+function toHref(key, value) {
+  let link = value.substring(1);
+  if (link.startsWith("./") || link.startsWith("../")) {
+    return "/" + key + "/" + value.substring(1) + "/?autoSubscribe=1";
+  }
+  return "/" + link + "/?autoSubscribe=1";
 }
