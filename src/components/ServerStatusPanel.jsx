@@ -3,15 +3,20 @@ import ServerSelection from "./ServerSelection";
 import StatusIndicator from "./StatusIndicator";
 import EditIcon from "@mui/icons-material/Edit";
 import pkg from "../../package.json";
-import ThemeSwitch from "./ThemeSwitch";
+import ConfigButton from "./ConfigButton";
 
 export default function ServerStatusPanel({ setEditing }) {
   return (
     <Grid container columnGap={2}>
       <Grid item xs>
         <Stack direction="row" spacing={2} alignItems="center">
-          <ThemeSwitch />
-          <Typography>Wörterbuch&nbsp;Explorer&nbsp;v{pkg.version}</Typography>
+          {/* <ThemeSwitch /> */}
+          <Stack direction="row" spacing={1} alignItems="center">
+            <ConfigButton />
+            <Typography>
+              Wörterbuch&nbsp;Explorer&nbsp;v{pkg.version}
+            </Typography>
+          </Stack>
           <Stack flexGrow={1} />
           <StatusIndicator />
           <ServerSelection />

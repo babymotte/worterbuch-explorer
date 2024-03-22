@@ -175,6 +175,11 @@ export default function ServerManagement({ children }) {
       : "Wörterbuch Explorer";
   }, [knownServers, selectedServer]);
 
+  const [keepaliveTimeout, setKeepaliveTimeout] = usePersistedState(
+    "wortebruch.keepalive.timeout",
+    5
+  );
+
   return (
     <ServerContext.Provider
       value={{
@@ -186,6 +191,8 @@ export default function ServerManagement({ children }) {
         connectionStatus,
         setConnectionStatus,
         serverAlreadyExists,
+        keepaliveTimeout,
+        setKeepaliveTimeout,
       }}
     >
       {children}

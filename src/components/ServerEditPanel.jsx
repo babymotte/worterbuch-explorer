@@ -14,10 +14,10 @@ import {
 import ServerList from "./ServerList";
 import StatusIndicator from "./StatusIndicator";
 import pkg from "../../package.json";
-import ThemeSwitch from "./ThemeSwitch";
 import React from "react";
 import EditIcon from "@mui/icons-material/Edit";
 import { useServers } from "./ServerManagement";
+import ConfigButton from "./ConfigButton";
 
 export default function ServerEditPanel({ setEditing }) {
   const schemes = ["ws", "wss"];
@@ -51,10 +51,14 @@ export default function ServerEditPanel({ setEditing }) {
         <Grid item container xs columnGap={2}>
           <Grid item>
             <Stack direction="row" spacing={2} alignItems="center">
-              <ThemeSwitch />
-              <Typography>
-                Wörterbuch&nbsp;Explorer&nbsp;v{pkg.version}
-              </Typography>
+              {/* <ThemeSwitch /> */}
+
+              <Stack direction="row" spacing={1} alignItems="center">
+                <ConfigButton />
+                <Typography>
+                  Wörterbuch&nbsp;Explorer&nbsp;v{pkg.version}
+                </Typography>
+              </Stack>
             </Stack>
           </Grid>
           <Grid item xs>

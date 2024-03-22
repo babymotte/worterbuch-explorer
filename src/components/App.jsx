@@ -10,6 +10,7 @@ import { EditContext } from "./EditButton";
 import Subscription from "./Subscription";
 import Worterbuch from "./Worterbuch";
 import { connect } from "worterbuch-js";
+import SettingsDrawer from "./SettingsDrawer";
 
 const STATES = {
   SWITCHING_SERVER: "SWITCHING_SERVER",
@@ -66,7 +67,12 @@ function transitionValid(stateRef, newState) {
 
 export default function App() {
   const reconnectTimeoutRef = React.useRef();
-  const { selectedServer, knownServers, setConnectionStatus } = useServers();
+  const {
+    selectedServer,
+    knownServers,
+    setConnectionStatus,
+    keepaliveTimeout,
+  } = useServers();
   const [url, authtoken] = toUrl(knownServers[selectedServer]);
 
   const [snackbarOpen, setSnackbarOpen] = React.useState(false);
@@ -172,7 +178,7 @@ export default function App() {
 
   React.useEffect(() => {
     transitionState(STATES.SWITCHING_SERVER);
-  }, [selectedServer, transitionState]);
+  }, [selectedServer, transitionState, keepaliveTimeout]);
 
   React.useEffect(() => {
     if (state === STATES.SWITCHING_SERVER) {
@@ -220,7 +226,7 @@ export default function App() {
         reconnectTimeoutRef.current = null;
       }
 
-      connect(url, authtoken)
+      connect(url, authtoken, keepaliveTimeout)
         .then((wb) => {
           transitionState(STATES.CONNECTED, {
             status: "ok",
@@ -270,6 +276,7 @@ export default function App() {
   }, [
     authtoken,
     clearData,
+    keepaliveTimeout,
     knownServers.length,
     selectedServer,
     state,
@@ -310,37 +317,39 @@ export default function App() {
 
   return (
     <Theme>
-      <Worterbuch wb={wb}>
-        <Subscription subscribe={subscribe} unsubscribe={unsubscribe}>
-          <EditContext.Provider value={editContext}>
-            <Stack sx={{ width: "100vw", height: "100vh" }}>
-              <Ornament />
-              <Stack flexGrow={1} overflow="auto">
-                <Stack padding={2} spacing={2}>
-                  <TopicTree data={data} pdelete={pdelete} />
+      <SettingsDrawer>
+        <Worterbuch wb={wb}>
+          <Subscription subscribe={subscribe} unsubscribe={unsubscribe}>
+            <EditContext.Provider value={editContext}>
+              <Stack sx={{ width: "100vw", height: "100vh" }}>
+                <Ornament />
+                <Stack flexGrow={1} overflow="auto">
+                  <Stack padding={2} spacing={2}>
+                    <TopicTree data={data} pdelete={pdelete} />
+                  </Stack>
                 </Stack>
+                <SetPanel set={set} />
+                <Ornament />
+                <BottomPanel />
               </Stack>
-              <SetPanel set={set} />
-              <Ornament />
-              <BottomPanel />
-            </Stack>
-            <Snackbar
-              open={snackbarOpen}
-              autoHideDuration={6000}
-              onClose={handleSnackbarClose}
-            >
-              <Alert
+              <Snackbar
+                open={snackbarOpen}
+                autoHideDuration={6000}
                 onClose={handleSnackbarClose}
-                severity={snackbarSeverity}
-                variant="filled"
-                sx={{ width: "100%" }}
               >
-                {snackbarMessage}
-              </Alert>
-            </Snackbar>
-          </EditContext.Provider>
-        </Subscription>
-      </Worterbuch>
+                <Alert
+                  onClose={handleSnackbarClose}
+                  severity={snackbarSeverity}
+                  variant="filled"
+                  sx={{ width: "100%" }}
+                >
+                  {snackbarMessage}
+                </Alert>
+              </Snackbar>
+            </EditContext.Provider>
+          </Subscription>
+        </Worterbuch>
+      </SettingsDrawer>
     </Theme>
   );
 }
