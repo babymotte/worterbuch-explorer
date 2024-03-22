@@ -114,7 +114,14 @@ function ValueRenderer({ path, value, shortValue }) {
   if (typeof value === "string" && value.startsWith("@")) {
     let hrf = toHref(path, value);
     return (
-      <Link href={hrf}>
+      <Link
+        href={hrf}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={(e) => {
+          e.stopPropagation();
+        }}
+      >
         <Typography
           display="inline-block"
           style={{ fontWeight: 600, marginInlineStart: 4 }}
