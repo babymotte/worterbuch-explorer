@@ -1,8 +1,6 @@
 import * as React from "react";
-import TreeView from "@mui/lab/TreeView";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import TreeItem from "@mui/lab/TreeItem";
+import { TreeView } from "@mui/x-tree-view/TreeView";
+import { TreeItem } from "@mui/x-tree-view/TreeItem";
 import { Link, Stack, Tooltip, Typography } from "@mui/material";
 import DeleteButton from "./DeleteButton";
 import CopyButton from "./CopyButton";
@@ -14,8 +12,6 @@ export default function TopicTree({ data, pdelete }) {
   return (
     <TreeView
       aria-label="file system navigator"
-      defaultCollapseIcon={<ExpandMoreIcon />}
-      defaultExpandIcon={<ChevronRightIcon />}
       sx={{
         flexGrow: 1,
         maxWidth: "100vw",
@@ -67,7 +63,7 @@ function toTreeItem(path, item, id, pdelete) {
       </Stack>
     );
     return (
-      <TreeItem key={path} nodeId={path} label={label}>
+      <TreeItem key={path} itemId={path} label={label}>
         {item.children ? toTreeItems(item.children, pdelete, path) : null}
       </TreeItem>
     );
