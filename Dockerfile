@@ -7,4 +7,4 @@ RUN npm run build
 
 FROM nginx:alpine
 WORKDIR /app
-COPY --from=worterbuch-explorer-builder /src/build /usr/share/nginx/html
+COPY --from=worterbuch-explorer-builder /src/dist /usr/share/nginx/html

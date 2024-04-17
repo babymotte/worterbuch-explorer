@@ -386,7 +386,6 @@ function mergeIn(data, headSegment, segmentsTail, value) {
   if (!child) {
     child = {};
     data.set(headSegment, child);
-  } else {
   }
 
   if (segmentsTail.length === 0) {
