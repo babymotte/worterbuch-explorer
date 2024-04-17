@@ -148,10 +148,11 @@ export default function SubscriptionBar() {
 }
 
 function getSubscriptionFromPath(location, storedSubscription) {
-  if (location.pathname === "/") {
+  const decoded = decodeURI(location.pathname);
+  if (decoded === "/") {
     return storedSubscription;
   }
-  return location.pathname.slice(1) + "#";
+  return decoded.slice(1) + "#";
 }
 
 function getAutoSubscribe(searchParams, storedAutoSubscribe) {
