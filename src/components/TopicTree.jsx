@@ -106,35 +106,72 @@ function Label({ path, id, value }) {
   );
 }
 
-function ValueRenderer({ path, value, shortValue }) {
-  if (typeof value === "string" && value.startsWith("@")) {
-    let hrf = toHref(path, value);
-    return (
-      <Link
-        href={hrf}
-        target="_blank"
-        rel="noopener noreferrer"
-        onClick={(e) => {
-          e.stopPropagation();
-        }}
-      >
-        <Typography
-          display="inline-block"
-          style={{ fontWeight: 600, marginInlineStart: 4 }}
-        >
-          {shortValue}
-        </Typography>
-      </Link>
-    );
-  } else {
-    return (
+function LinkLabel({ path, value, shortValue }) {
+  let hrf = toHref(path, value);
+  return (
+    <Link
+      href={hrf}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={(e) => {
+        e.stopPropagation();
+      }}
+    >
       <Typography
         display="inline-block"
         style={{ fontWeight: 600, marginInlineStart: 4 }}
       >
         {shortValue}
       </Typography>
-    );
+    </Link>
+  );
+}
+
+function ArrayLabel({ path, value, shortValue }) {
+  if (value.some((e) => typeof e === "string" && e.startsWith("@"))) {
+    return <LinkArrayLabel path={path} value={value} />;
+  } else {
+    return <DefaultLabel shortValue={shortValue} />;
+  }
+}
+
+function LinkArrayLabel({ path, value }) {
+  const items = value.map((e, i) => [
+    typeof e === "string" && e.startsWith("@") ? (
+      <LinkLabel path={path} value={e} shortValue={JSON.stringify(e)} />
+    ) : (
+      <DefaultLabel shortValue={JSON.stringify(e)} />
+    ),
+    i < value.length - 1 ? <DefaultLabel shortValue="," /> : null,
+  ]);
+
+  return (
+    <Stack direction="row">
+      <DefaultLabel shortValue="[" />
+      {items}
+      <DefaultLabel shortValue="]" />
+    </Stack>
+  );
+}
+
+function DefaultLabel({ shortValue }) {
+  return (
+    <Typography
+      display="inline-block"
+      style={{ fontWeight: 600, marginInlineStart: 4 }}
+    >
+      {shortValue}
+    </Typography>
+  );
+}
+
+function ValueRenderer({ path, value, shortValue }) {
+  if (typeof value === "string" && value.startsWith("@")) {
+    return <LinkLabel path={path} value={value} shortValue={shortValue} />;
+  } else if (Array.isArray(value)) {
+    return <ArrayLabel path={path} value={value} shortValue={shortValue} />;
+  } else {
+    return <DefaultLabel shortValue={shortValue} />;
   }
 }
 
