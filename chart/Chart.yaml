@@ -3,6 +3,6 @@
   "name": "worterbuch-explorer",
   "description": "Helm chart for a worterbuch explorer webapp",
   "type": "application",
-  "version": "0.43.6",
-  "appVersion": "0.43.6"
+  "version": "0.43.7",
+  "appVersion": "0.43.7"
 }
