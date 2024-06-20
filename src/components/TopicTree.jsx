@@ -177,8 +177,13 @@ function ValueRenderer({ path, value, shortValue }) {
 
 function toHref(key, value) {
   let link = value.substring(1);
-  if (link.startsWith("./") || link.startsWith("../")) {
-    return "/" + key + "/" + value.substring(1) + "/?autoSubscribe=1";
+
+  if (link.startsWith("@")) {
+    return toHref(key, link);
+  } else {
+    if (link.startsWith("./") || link.startsWith("../")) {
+      return "/" + key + "/" + link + "/?autoSubscribe=1";
+    }
+    return "/" + link + "/?autoSubscribe=1";
   }
-  return "/" + link + "/?autoSubscribe=1";
 }
