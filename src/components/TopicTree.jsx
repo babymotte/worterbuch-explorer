@@ -5,9 +5,18 @@ import { Link, Stack, Tooltip, Typography } from "@mui/material";
 import DeleteButton from "./DeleteButton";
 import CopyButton from "./CopyButton";
 import EditButton from "./EditButton";
+import { useWb } from "./Worterbuch";
 
 export default function TopicTree({ data, pdelete }) {
   const treeItems = toTreeItems(data, pdelete);
+
+  const wb = useWb();
+
+  React.useEffect(() => {
+    if (wb) {
+      wb.setClientName("WorterbuchExplorer");
+    }
+  }, [wb]);
 
   return (
     <TreeView
