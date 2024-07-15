@@ -9,11 +9,12 @@ export default function useKeyAutocomplete(key, addWildcard) {
       const split = key.split("/");
       split.splice(split.length - 1, 1);
       const parent = split.length > 0 ? split.join("/") : undefined;
-      wb.ls(parent).then((children) => {
+      wb.pLs(parent).then((children) => {
         children.sort((a, b) => a.localeCompare(b));
-        const options = addWildcard ? ["#"] : [];
+        const options = addWildcard ? ["#", "?"] : [];
         if (key.endsWith("/")) {
           options.push(key + "#");
+          options.push(key + "?");
         }
         for (const segment of children) {
           options.push(parent ? parent + "/" + segment : segment);

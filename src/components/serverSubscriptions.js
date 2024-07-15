@@ -13,7 +13,7 @@ export function useSubscriptionsForServer(selectedServer, knownServers) {
     subscriptionsKey,
     {}
   );
-  const subscription = subscriptions[url] || "#";
+  const subscription = urlDeEscapeSubscriptionKey(subscriptions[url]) || "#";
   const setSubscription = React.useCallback(
     (key) => {
       const sanitizedKey = sanitizeSubscriptionKey(key);
@@ -47,7 +47,6 @@ export default function useServerSubscriptions() {
 }
 
 function sanitizeSubscriptionKey(key) {
-  console.log(key);
   let sanitizedKey = key;
   if (key.length === 0) {
     sanitizedKey = "#";
@@ -59,6 +58,10 @@ function sanitizeSubscriptionKey(key) {
   return sanitizedKey;
 }
 
-function urlEscapeSubscriptionKey(key) {
+export function urlEscapeSubscriptionKey(key) {
   return encodeURIComponent(key).replaceAll("%2F", "/");
+}
+
+export function urlDeEscapeSubscriptionKey(key) {
+  return decodeURIComponent(key).replaceAll("%2F", "/");
 }

@@ -10,7 +10,9 @@ import { useServers } from "./ServerManagement";
 import React from "react";
 import KeyEditor from "./KeyEditor";
 import { useSubscription } from "./Subscription";
-import useServerSubscriptions from "./serverSubscriptions";
+import useServerSubscriptions, {
+  urlDeEscapeSubscriptionKey,
+} from "./serverSubscriptions";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
 export default function SubscriptionBar() {
@@ -138,7 +140,7 @@ export default function SubscriptionBar() {
 }
 
 function getSubscriptionFromPath(location, storedSubscription) {
-  const decoded = decodeURIComponent(location.pathname).replaceAll("%2F", "/");
+  const decoded = urlDeEscapeSubscriptionKey(location.pathname);
   if (decoded === "/") {
     return storedSubscription;
   }
