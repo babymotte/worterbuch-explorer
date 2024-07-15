@@ -16,8 +16,11 @@ export function useSubscriptionsForServer(selectedServer, knownServers) {
   const subscription = subscriptions[url] || "#";
   const setSubscription = React.useCallback(
     (key) => {
-      subscriptions[url] = key;
+      const sanitizedKey = sanitizeSubscriptionKey(key);
+      const urlEscapedKey = urlEscapeSubscriptionKey(sanitizedKey);
+      subscriptions[url] = urlEscapedKey;
       setSubscriptions({ ...subscriptions });
+      return [sanitizedKey, urlEscapedKey];
     },
     [setSubscriptions, subscriptions, url]
   );
@@ -41,4 +44,21 @@ export function useSubscriptionsForServer(selectedServer, knownServers) {
 export default function useServerSubscriptions() {
   const { selectedServer, knownServers } = useServers();
   return useSubscriptionsForServer(selectedServer, knownServers);
+}
+
+function sanitizeSubscriptionKey(key) {
+  console.log(key);
+  let sanitizedKey = key;
+  if (key.length === 0) {
+    sanitizedKey = "#";
+  } else {
+    if (key.endsWith("/")) {
+      sanitizedKey = key + "#";
+    }
+  }
+  return sanitizedKey;
+}
+
+function urlEscapeSubscriptionKey(key) {
+  return encodeURIComponent(key).replaceAll("%2F", "/");
 }

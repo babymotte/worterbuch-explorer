@@ -52,19 +52,9 @@ export default function SubscriptionBar() {
 
   const subscribeKey = React.useCallback(
     (key) => {
-      let sanitizedKey = key;
-      if (key.length === 0) {
-        sanitizedKey = "#";
-      } else if (!key.endsWith("#")) {
-        if (key.endsWith("/")) {
-          sanitizedKey = key + "#";
-        } else {
-          sanitizedKey = key + "/#";
-        }
-      }
-      setSubscription(sanitizedKey);
+      const [sanitizedKey, urlSegment] = setSubscription(key);
       subscribe(sanitizedKey, setSubscribed);
-      const path = "/" + sanitizedKey;
+      const path = "/" + urlSegment;
       navigate(path);
       searchParams.set("autoSubscribe", autoSubscribe ? "1" : "0");
       setSearchParams(searchParams);
@@ -148,11 +138,11 @@ export default function SubscriptionBar() {
 }
 
 function getSubscriptionFromPath(location, storedSubscription) {
-  const decoded = decodeURI(location.pathname);
+  const decoded = decodeURIComponent(location.pathname).replaceAll("%2F", "/");
   if (decoded === "/") {
     return storedSubscription;
   }
-  return decoded.slice(1) + "#";
+  return decoded.slice(1);
 }
 
 function getAutoSubscribe(searchParams, storedAutoSubscribe) {
