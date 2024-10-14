@@ -67,12 +67,7 @@ function transitionValid(stateRef, newState) {
 
 export default function App() {
   const reconnectTimeoutRef = React.useRef();
-  const {
-    selectedServer,
-    knownServers,
-    setConnectionStatus,
-    keepaliveTimeout,
-  } = useServers();
+  const { selectedServer, knownServers, setConnectionStatus } = useServers();
   const [url, authtoken] = toUrl(knownServers[selectedServer]);
 
   const [snackbarOpen, setSnackbarOpen] = React.useState(false);
@@ -178,7 +173,7 @@ export default function App() {
 
   React.useEffect(() => {
     transitionState(STATES.SWITCHING_SERVER);
-  }, [selectedServer, transitionState, keepaliveTimeout]);
+  }, [selectedServer, transitionState]);
 
   React.useEffect(() => {
     if (state === STATES.SWITCHING_SERVER) {
@@ -226,7 +221,7 @@ export default function App() {
         reconnectTimeoutRef.current = null;
       }
 
-      connect(url, authtoken, keepaliveTimeout)
+      connect(url, authtoken)
         .then((wb) => {
           transitionState(STATES.CONNECTED, {
             status: "ok",
@@ -276,7 +271,6 @@ export default function App() {
   }, [
     authtoken,
     clearData,
-    keepaliveTimeout,
     knownServers.length,
     selectedServer,
     state,

@@ -47,26 +47,6 @@ export default function SettingsDrawer({ children }) {
           />
         </ListItem>
       </List>
-      <Divider />
-      <List>
-        <ListItem>
-          <ListItemIcon>
-            <AccessTimeIcon />
-          </ListItemIcon>
-          <ListItemText>Keepalive Timeout:</ListItemText>
-          <Select
-            size="small"
-            defaultValue={keepaliveTimeout}
-            onChange={(e) => setKeepaliveTimeout(e.target.value)}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <MenuItem value={5}>5 s</MenuItem>
-            <MenuItem value={10}>10 s</MenuItem>
-            <MenuItem value={30}>30 s</MenuItem>
-            <MenuItem value={999999}>∞</MenuItem>
-          </Select>
-        </ListItem>
-      </List>
     </Box>
   );
 
