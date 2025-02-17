@@ -1,6 +1,6 @@
 {
   "name": "worterbuch-explorer",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": {
     "name": "Michael Bachmann",
     "email": "mbachmann@bbmsoft.net"
@@ -19,7 +19,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.21.3",
-    "worterbuch-js": "^1.0.0"
+    "worterbuch-js": "^1.0.1"
   },
   "devDependencies": {
     "@types/react": "^18.2.66",

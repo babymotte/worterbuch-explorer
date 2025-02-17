@@ -2,7 +2,7 @@ import * as React from "react";
 import TopicTree from "./TopicTree";
 import SortedMap from "collections/sorted-map";
 import BottomPanel from "./BottomPanel";
-import { toUrl, useServers } from "./ServerManagement";
+import { toUrl, toUrls, useServers } from "./ServerManagement";
 import Theme from "./Theme";
 import { Alert, Box, Snackbar, Stack, useTheme } from "@mui/material";
 import SetPanel from "./SetPanel";
@@ -68,7 +68,7 @@ function transitionValid(stateRef, newState) {
 export default function App() {
   const reconnectTimeoutRef = React.useRef();
   const { selectedServer, knownServers, setConnectionStatus } = useServers();
-  const [url, authtoken] = toUrl(knownServers[selectedServer]);
+  const [url, authtoken] = toUrls(knownServers[selectedServer]);
 
   const [snackbarOpen, setSnackbarOpen] = React.useState(false);
   const [snackbarSeverity, setSnackbarSeverity] = React.useState("error");

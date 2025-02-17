@@ -5,15 +5,26 @@ import { usePersistedState } from "./persistedState";
 const ServerContext = React.createContext();
 
 export function toUrl(server) {
-  if (!server) {
+  if (!server || !server.endpoints || !server.scheme) {
     return [undefined, undefined];
   }
-  return [
-    `${server.scheme}://${server.host}${
-      server.port !== 80 ? ":" + server.port : ""
-    }/ws`,
-    server.authToken,
-  ];
+
+  const url =
+    server.endpoints.length > 1
+      ? `${server.scheme}://[${server.endpoints}]/ws`
+      : `${server.scheme}://${server.endpoints[0]}/ws`;
+
+  return [url, server.authToken];
+}
+
+export function toUrls(server) {
+  if (!server || !server.endpoints || !server.scheme) {
+    return [undefined, undefined];
+  }
+
+  const urls = server.endpoints.map((s) => `${server.scheme}://${s}/ws`);
+
+  return [urls, server.authToken];
 }
 
 export function useServers() {
@@ -24,6 +35,36 @@ export function useServers() {
 const STORAGE_KEY_SERVERS = "worterbuch.explorer.knownServers";
 const STORAGE_KEY_SELECTED = "worterbuch.explorer.server";
 
+function migrateServers(servers) {
+  return servers.map((s) => {
+    if (s.host != null) {
+      const newServer = {
+        scheme: s.scheme,
+        endpoints: [s.port && s.port !== 80 ? `${s.host}:${s.port}` : s.host],
+        authToken: s.authToken,
+      };
+      console.log(s, "=>", newServer);
+      return newServer;
+    } else {
+      return s;
+    }
+  });
+}
+
+function endpointsEqual(a, b) {
+  if (a.length !== b.length) {
+    return false;
+  }
+
+  for (const ep of a) {
+    if (!b.includes(ep)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 export default function ServerManagement({ children }) {
   const navigate = useNavigate();
   const [selectedServer, setSelectedServer] = usePersistedState(
@@ -32,7 +73,8 @@ export default function ServerManagement({ children }) {
   );
   const [knownServers, setKnownServers] = usePersistedState(
     STORAGE_KEY_SERVERS,
-    []
+    [],
+    migrateServers
   );
   React.useEffect(() => {
     if (selectedServer >= knownServers.length) {
@@ -48,8 +90,7 @@ export default function ServerManagement({ children }) {
       for (const s of knownServers) {
         if (
           server.scheme === s.scheme &&
-          server.host === s.host &&
-          server.port === s.port
+          endpointsEqual(server.endpoints, s.endpoints)
         ) {
           return s;
         }
@@ -63,8 +104,7 @@ export default function ServerManagement({ children }) {
       for (const s of knownServers) {
         if (
           server.scheme === s.scheme &&
-          server.host === s.host &&
-          server.port === s.port
+          endpointsEqual(server.endpoints, s.endpoints)
         ) {
           return true;
         }
@@ -113,18 +153,13 @@ export default function ServerManagement({ children }) {
   let [searchParams, setSearchParams] = useSearchParams();
 
   const scheme = searchParams.get("scheme") || "ws";
-  const host = searchParams.get("host");
-  const port =
-    Number.parseInt(searchParams.get("port")) || (scheme === "wss" ? 443 : 80);
-  const authToken = searchParams.get("authToken");
+  const endpoints = searchParams.get("endpoints")?.split(",");
 
   React.useEffect(() => {
-    if (host) {
+    if (endpoints) {
       const server = {
         scheme,
-        host,
-        port,
-        authToken,
+        endpoints,
       };
       let s = getExistingServer(server);
       if (s === null) {
@@ -143,13 +178,11 @@ export default function ServerManagement({ children }) {
     }
   }, [
     addServer,
-    authToken,
     getExistingServer,
-    host,
     indexOf,
     knownServers,
-    port,
     scheme,
+    endpoints,
     searchParams,
     selectedServer,
     serverAlreadyExists,
@@ -203,14 +236,12 @@ export default function ServerManagement({ children }) {
 function updateSearchParams(server, searchParams) {
   if (server) {
     searchParams.set("scheme", server.scheme);
-    searchParams.set("host", server.host);
-    searchParams.set("port", server.port);
+    searchParams.set("endpoints", server.endpoints.join(","));
     searchParams.delete("authToken");
     searchParams.delete("autoSubscribe");
   } else {
     searchParams.delete("scheme");
-    searchParams.delete("host");
-    searchParams.delete("port");
+    searchParams.delete("endpoints");
     searchParams.delete("authToken");
   }
 }

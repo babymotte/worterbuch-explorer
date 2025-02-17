@@ -1,7 +1,7 @@
 import React from "react";
 
-export function usePersistedState(key, initialValue) {
-  const [state, setState] = React.useState(load(key, initialValue));
+export function usePersistedState(key, initialValue, migration) {
+  const [state, setState] = React.useState(load(key, initialValue, migration));
   const persistState = React.useCallback(
     (state) => {
       persist(key, state);
@@ -18,12 +18,13 @@ function persist(key, value) {
   }
 }
 
-function load(key, defaultValue) {
+function load(key, defaultValue, migration) {
   if (window.localStorage) {
     const stored = window.localStorage.getItem(key);
     if (stored) {
       try {
-        return JSON.parse(stored);
+        const parsed = JSON.parse(stored);
+        return migration ? migration(parsed) : parsed;
       } catch (err) {
         console.error(
           `Could not load persisted value for key '${key}':`,

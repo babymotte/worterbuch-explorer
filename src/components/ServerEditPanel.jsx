@@ -23,16 +23,14 @@ export default function ServerEditPanel({ setEditing }) {
   const schemes = ["ws", "wss"];
 
   const [scheme, setScheme] = React.useState("ws");
-  const [host, setHost] = React.useState("");
-  const [port, setPort] = React.useState(80);
+  const [endpoints, setEndpoints] = React.useState([]);
   const [authToken, setAuthToken] = React.useState(null);
 
   const { addServer, serverAlreadyExists } = useServers();
 
   const server = {
     scheme,
-    host,
-    port,
+    endpoints,
     authToken,
   };
 
@@ -77,7 +75,7 @@ export default function ServerEditPanel({ setEditing }) {
               spacing={2}
               sx={{ height: "100%", width: "100%" }}
             >
-              <Stack direction="row" spacing={0.5}>
+              <Stack direction="row" spacing={0.5} sx={{ flexGrow: 1 }}>
                 <FormControl>
                   <InputLabel id="scheme-select-label">Scheme</InputLabel>
                   <Tooltip title={error}>
@@ -92,8 +90,11 @@ export default function ServerEditPanel({ setEditing }) {
                       sx={{ width: "6em" }}
                       error={alreadyExists}
                     >
-                      <MenuItem value={schemes[0]}>{schemes[0]}</MenuItem>
-                      <MenuItem value={schemes[1]}>{schemes[1]}</MenuItem>
+                      {schemes.map((s, i) => (
+                        <MenuItem key={i} value={s}>
+                          {s}
+                        </MenuItem>
+                      ))}
                     </Select>
                   </Tooltip>
                 </FormControl>
@@ -103,38 +104,26 @@ export default function ServerEditPanel({ setEditing }) {
                 <Tooltip title={error}>
                   <TextField
                     size="small"
-                    label="Host"
+                    label="Endpoints"
+                    placeholder="host[:port] [,host2[:port2], …]"
                     variant="outlined"
-                    defaultValue={host}
-                    onChange={(e) => setHost(e.target.value)}
+                    defaultValue={endpoints?.join(", ") || ""}
+                    onChange={(e) =>
+                      setEndpoints(
+                        e.target.value?.split(",").map((it) => it.trim()) || []
+                      )
+                    }
                     error={alreadyExists}
+                    sx={{ flexGrow: 1 }}
                   />
                 </Tooltip>
-                <Stack justifyContent="center">
-                  <Typography>:</Typography>
-                </Stack>
-                <Tooltip title={error}>
-                  <TextField
-                    size="small"
-                    label="Port"
-                    variant="outlined"
-                    sx={{ width: "6em" }}
-                    defaultValue={port}
-                    onChange={(e) => setPort(parseInt(e.target.value))}
-                    error={alreadyExists}
-                  />
-                </Tooltip>
-                <Stack justifyContent="center">
-                  <Typography>/ws</Typography>
-                </Stack>
-                <Stack justifyContent="center" />
               </Stack>
 
               <TextField
                 size="small"
                 label="Auth Token"
                 variant="outlined"
-                sx={{ width: "16em" }}
+                sx={{ flexGrow: 1 }}
                 defaultValue={null}
                 onChange={(e) => setAuthToken(e.target.value)}
               />
