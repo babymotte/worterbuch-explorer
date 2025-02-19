@@ -7,7 +7,7 @@ import { useDrawer } from "./SettingsDrawer";
 export default function ConfigButton() {
   const [setSettingsOpen] = useDrawer();
 
-  const openSettings = (e) => {
+  const openSettings = () => {
     setSettingsOpen(true);
   };
 

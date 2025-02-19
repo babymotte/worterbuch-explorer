@@ -17,14 +17,16 @@ export function toUrl(server) {
   return [url, server.authToken];
 }
 
-export function toUrls(server) {
-  if (!server || !server.endpoints || !server.scheme) {
-    return [undefined, undefined];
-  }
+export function useToUrls(server) {
+  return React.useMemo(() => {
+    if (!server || !server.endpoints || !server.scheme) {
+      return [undefined, undefined];
+    }
 
-  const urls = server.endpoints.map((s) => `${server.scheme}://${s}/ws`);
+    const urls = server.endpoints.map((s) => `${server.scheme}://${s}/ws`);
 
-  return [urls, server.authToken];
+    return [urls, server.authToken];
+  }, [server]);
 }
 
 export function useServers() {

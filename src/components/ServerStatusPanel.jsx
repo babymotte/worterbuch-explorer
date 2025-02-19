@@ -4,6 +4,7 @@ import StatusIndicator from "./StatusIndicator";
 import EditIcon from "@mui/icons-material/Edit";
 import pkg from "../../package.json";
 import ConfigButton from "./ConfigButton";
+import React from "react";
 
 export default function ServerStatusPanel({ setEditing }) {
   return (

@@ -2,7 +2,7 @@ import * as React from "react";
 import TopicTree from "./TopicTree";
 import SortedMap from "collections/sorted-map";
 import BottomPanel from "./BottomPanel";
-import { toUrl, toUrls, useServers } from "./ServerManagement";
+import { useToUrls, useServers } from "./ServerManagement";
 import Theme from "./Theme";
 import { Alert, Box, Snackbar, Stack, useTheme } from "@mui/material";
 import SetPanel from "./SetPanel";
@@ -11,6 +11,10 @@ import Subscription from "./Subscription";
 import Worterbuch from "./Worterbuch";
 import { connect } from "worterbuch-js";
 import SettingsDrawer from "./SettingsDrawer";
+import {
+  storeConnectedAddress,
+  useSortAddresses,
+} from "./lastConnectedAddresses";
 
 const STATES = {
   SWITCHING_SERVER: "SWITCHING_SERVER",
@@ -68,7 +72,9 @@ function transitionValid(stateRef, newState) {
 export default function App() {
   const reconnectTimeoutRef = React.useRef();
   const { selectedServer, knownServers, setConnectionStatus } = useServers();
-  const [url, authtoken] = toUrls(knownServers[selectedServer]);
+  const server = knownServers[selectedServer];
+  const [url, authtoken] = useToUrls(server);
+  const sortedUrls = useSortAddresses([...url], server);
 
   const [snackbarOpen, setSnackbarOpen] = React.useState(false);
   const [snackbarSeverity, setSnackbarSeverity] = React.useState("error");
@@ -221,8 +227,9 @@ export default function App() {
         reconnectTimeoutRef.current = null;
       }
 
-      connect(url, authtoken)
+      connect(sortedUrls, authtoken)
         .then((wb) => {
+          storeConnectedAddress(wb.serverAddress, server);
           transitionState(STATES.CONNECTED, {
             status: "ok",
             message: "Connected to server",
@@ -273,9 +280,11 @@ export default function App() {
     clearData,
     knownServers.length,
     selectedServer,
+    server,
     state,
     transitionState,
     url,
+    sortedUrls,
   ]);
 
   const set = React.useCallback(

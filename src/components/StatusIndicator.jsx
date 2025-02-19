@@ -5,11 +5,12 @@ import WarningIcon from "@mui/icons-material/Warning";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { useServers } from "./ServerManagement";
 
-export default function StatusIndicator({
-  error,
-  noServerSelected,
-  connected,
-}) {
+export default function StatusIndicator() {
+//   {
+//   error,
+//   noServerSelected,
+//   connected,
+// }
   const {
     connectionStatus: { status, message },
   } = useServers();
