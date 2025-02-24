@@ -74,7 +74,7 @@ export default function App() {
   const { selectedServer, knownServers, setConnectionStatus } = useServers();
   const server = knownServers[selectedServer];
   const [url, authtoken] = useToUrls(server);
-  const sortedUrls = useSortAddresses([...url], server);
+  const sortedUrls = useSortAddresses(url ? [...url] : [], server);
 
   const [snackbarOpen, setSnackbarOpen] = React.useState(false);
   const [snackbarSeverity, setSnackbarSeverity] = React.useState("error");

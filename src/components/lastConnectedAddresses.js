@@ -19,14 +19,18 @@ export function storeConnectedAddress(address, server) {
 }
 
 export function useSortAddresses(addresses, server) {
-  const localStorage = window?.localStorage;
-
-  const lastConnected = localStorage?.getItem(
-    "worterbuch.explorer.connected.server." + toUrl(server)
-  );
-
   return React.useMemo(() => {
-    if (!lastConnected) {
+    if (server == null || addresses == null || addresses.length === 0) {
+      return addresses;
+    }
+
+    const localStorage = window?.localStorage;
+
+    const lastConnected = localStorage?.getItem(
+      "worterbuch.explorer.connected.server." + toUrl(server)
+    );
+
+    if (lastConnected != null) {
       return addresses;
     }
 
@@ -35,5 +39,5 @@ export function useSortAddresses(addresses, server) {
     );
 
     return addresses;
-  }, [addresses, lastConnected]);
+  }, [addresses]);
 }
