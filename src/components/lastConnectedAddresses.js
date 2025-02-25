@@ -1,5 +1,17 @@
 import React from "react";
-import { toUrl } from "./ServerManagement";
+
+String.prototype.hashCode = function () {
+  var hash = 0,
+    i,
+    chr;
+  if (this.length === 0) return hash;
+  for (i = 0; i < this.length; i++) {
+    chr = this.charCodeAt(i);
+    hash = (hash << 5) - hash + chr;
+    hash |= 0; // Convert to 32bit integer
+  }
+  return hash;
+};
 
 export function storeConnectedAddress(address, server) {
   if (!address) {
@@ -13,24 +25,25 @@ export function storeConnectedAddress(address, server) {
   }
 
   localStorage.setItem(
-    "worterbuch.explorer.connected.server." + toUrl(server),
+    "worterbuch.explorer.connected.server." +
+      Math.abs(JSON.stringify(server).hashCode()),
     address
   );
 }
 
 export function useSortAddresses(addresses, server) {
+  const hash = server ? Math.abs(JSON.stringify(server).hashCode()) : undefined;
+  const localStorage = window?.localStorage;
+  const lastConnected = hash
+    ? localStorage?.getItem("worterbuch.explorer.connected.server." + hash)
+    : undefined;
+
   return React.useMemo(() => {
-    if (server == null || addresses == null || addresses.length === 0) {
-      return addresses;
+    if (typeof addresses === "string") {
+      return [addresses];
     }
 
-    const localStorage = window?.localStorage;
-
-    const lastConnected = localStorage?.getItem(
-      "worterbuch.explorer.connected.server." + toUrl(server)
-    );
-
-    if (lastConnected != null) {
+    if (lastConnected == null || addresses == null || addresses.length === 0) {
       return addresses;
     }
 
@@ -39,5 +52,5 @@ export function useSortAddresses(addresses, server) {
     );
 
     return addresses;
-  }, [addresses]);
+  }, [addresses, hash]);
 }
