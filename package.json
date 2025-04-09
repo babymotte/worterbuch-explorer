@@ -15,6 +15,8 @@
     "@mui/lab": "^5.0.0-alpha.92",
     "@mui/material": "^5.9.2",
     "@mui/x-tree-view": "^7.2.0",
+    "axios": "^1.8.4",
+    "axois": "^0.0.1-security",
     "collections": "^5.1.13",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

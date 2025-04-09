@@ -320,7 +320,7 @@ export default function App() {
 
   return (
     <Theme>
-      <SettingsDrawer>
+      <SettingsDrawer wbAddress={{ address: wb?.serverAddress, authtoken }}>
         <Worterbuch wb={wb}>
           <Subscription subscribe={subscribe} unsubscribe={unsubscribe}>
             <EditContext.Provider value={editContext}>
