@@ -24,7 +24,7 @@ export default function KeyEditor({
       disableClearable
       options={keySuggestions}
       inputValue={key}
-      onInputChange={(event, newInputValue) => setKey(newInputValue.trim())}
+      onInputChange={(event, newInputValue) => setKey(newInputValue)}
       sx={sx}
       renderInput={(params) => (
         <TextField
