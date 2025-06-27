@@ -10,7 +10,6 @@ import DarkModeIcon from "@mui/icons-material/DarkMode";
 import LightModeIcon from "@mui/icons-material/LightMode";
 import Switch from "@mui/material/Switch";
 import { useDarkMode } from "./Theme";
-import Divider from "@mui/material/Divider";
 import Button from "@mui/material/Button";
 import DownloadIcon from "@mui/icons-material/Download";
 import UploadIcon from "@mui/icons-material/Upload";
@@ -38,22 +37,31 @@ export default function SettingsDrawer({ children, wbAddress }) {
 
   const { authtoken, address } = wbAddress;
 
+  let scheme = null;
   let host = null;
   let port = null;
 
   if (address) {
-    const regex = /(.+):\/\/(.+):([0-9]+)\/ws/gm;
+    const regex = /(.+):\/\/([^:]+)(:([0-9]+))?\/ws/gm;
 
     for (const match of address.matchAll(regex)) {
+      scheme = match[1];
       host = match[2];
-      port = match[3];
+      port =
+        match[4] != null
+          ? match[4]
+          : scheme == "ws"
+          ? 80
+          : scheme == "wss"
+          ? 443
+          : null;
     }
   }
 
   const DrawerList = (
     <Box sx={{ width: 350 }} role="presentation" onClick={toggleDrawer(false)}>
       <List>
-        <ListItem>
+        <ListItem divider>
           <ListItemIcon>
             {darkMode ? <DarkModeIcon /> : <LightModeIcon />}
           </ListItemIcon>
@@ -66,9 +74,7 @@ export default function SettingsDrawer({ children, wbAddress }) {
         </ListItem>
         {host != null && port != null ? (
           <ImpExpDump host={host} port={port} authtoken={authtoken} />
-        ) : (
-          <ImpExpDumpDisabled />
-        )}
+        ) : null}
       </List>
     </Box>
   );
@@ -107,35 +113,39 @@ function ImpExpDump({ host, port, authtoken }) {
 
   return (
     <>
-      <Divider component="li" />
-
       <ListItem>
         <ListItemIcon>
           <UploadIcon />
         </ListItemIcon>
-        <ListItemText>Import</ListItemText>
+        <ListItemText sx={{ minWidth: "40%", maxWidth: "40%" }}>
+          Import
+        </ListItemText>
         <Button
+          sx={{ flexGrow: 1 }}
           component="label"
           role={undefined}
           variant="contained"
           tabIndex={-1}
         >
-          Upload files
+          Upload
           <VisuallyHiddenInput
             type="file"
-            // accept=".gz"
+            accept=".json.gz"
             onChange={(event) => console.log(event.target.files)}
             multiple
           />
         </Button>
       </ListItem>
 
-      <ListItem>
+      <ListItem divider>
         <ListItemIcon>
           <DownloadIcon />
         </ListItemIcon>
-        <ListItemText>Export</ListItemText>
+        <ListItemText sx={{ minWidth: "40%", maxWidth: "40%" }}>
+          Export
+        </ListItemText>
         <Button
+          sx={{ flexGrow: 1 }}
           href={`http://${host}:${port}/api/v1/export`}
           target="_blank"
           rel="noopener noreferrer"
@@ -147,14 +157,15 @@ function ImpExpDump({ host, port, authtoken }) {
         </Button>
       </ListItem>
 
-      <Divider component="li" />
-
       <ListItem>
         <ListItemIcon>
           <MemoryIcon />
         </ListItemIcon>
-        <ListItemText>Memory Profile</ListItemText>
+        <ListItemText sx={{ minWidth: "40%", maxWidth: "40%" }}>
+          Memory Profile
+        </ListItemText>
         <Button
+          sx={{ flexGrow: 1 }}
           href={`http://${host}:${port}/api/v1/debug/flamegraph/live`}
           target="_blank"
           rel="noopener noreferrer"
@@ -166,12 +177,15 @@ function ImpExpDump({ host, port, authtoken }) {
         </Button>
       </ListItem>
 
-      <ListItem>
+      <ListItem divider>
         <ListItemIcon>
           <DownloadIcon />
         </ListItemIcon>
-        <ListItemText>Memory Profile</ListItemText>
+        <ListItemText sx={{ minWidth: "40%", maxWidth: "40%" }}>
+          Memory Profile
+        </ListItemText>
         <Button
+          sx={{ flexGrow: 1 }}
           href={`http://${host}:${port}/api/v1/debug/heap/live`}
           target="_blank"
           rel="noopener noreferrer"
@@ -183,13 +197,13 @@ function ImpExpDump({ host, port, authtoken }) {
         </Button>
       </ListItem>
 
-      <Divider component="li" />
-
-      <ListItem>
+      <ListItem divider>
         <ListItemIcon>
           <CookieIcon />
         </ListItemIcon>
-        <ListItemText>JWT Cookie</ListItemText>
+        <ListItemText sx={{ minWidth: "40%", maxWidth: "40%" }}>
+          JWT Cookie
+        </ListItemText>
         <JwtCookieButton host={host} port={port} authtoken={authtoken} />
       </ListItem>
     </>
@@ -214,6 +228,7 @@ function JwtCookieButton({ host, port, authtoken }) {
 
   return (
     <Button
+      sx={{ flexGrow: 1 }}
       variant="contained"
       color="primary"
       onClick={(e) => {
@@ -224,46 +239,6 @@ function JwtCookieButton({ host, port, authtoken }) {
     >
       {status ? "Clear" : error ? "Error" : "Set"}
     </Button>
-  );
-}
-
-function ImpExpDumpDisabled() {
-  return (
-    <>
-      <Divider component="li" />
-
-      <ListItem disabled>
-        <ListItemIcon>
-          <DownloadIcon />
-        </ListItemIcon>
-        <ListItemText>Export</ListItemText>
-        <Button disabled variant="contained" color="primary">
-          Download
-        </Button>
-      </ListItem>
-
-      <ListItem disabled>
-        <ListItemIcon>
-          <UploadIcon />
-        </ListItemIcon>
-        <ListItemText>Import</ListItemText>
-        <Button disabled variant="contained" color="primary">
-          Upload
-        </Button>
-      </ListItem>
-
-      <Divider component="li" />
-
-      <ListItem disabled>
-        <ListItemIcon>
-          <DownloadIcon />
-        </ListItemIcon>
-        <ListItemText>Heap Dump</ListItemText>
-        <Button disabled variant="contained" color="primary">
-          Download
-        </Button>
-      </ListItem>
-    </>
   );
 }
 
