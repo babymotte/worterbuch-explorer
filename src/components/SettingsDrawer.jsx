@@ -27,8 +27,10 @@ export function useDrawer() {
 export default function SettingsDrawer({ children, wbAddress }) {
   const [open, setOpen] = React.useState(false);
 
-  const toggleDrawer = (newOpen) => () => {
-    setOpen(newOpen);
+  const closeDrawer = (e, reason) => {
+    if (reason === "backdropClick" || reason === "escapeKeyDown") {
+      setOpen(false);
+    }
   };
 
   const { darkMode, setDarkMode } = useDarkMode();
@@ -59,7 +61,7 @@ export default function SettingsDrawer({ children, wbAddress }) {
   }
 
   const DrawerList = (
-    <Box sx={{ width: 350 }} role="presentation" onClick={toggleDrawer(false)}>
+    <Box sx={{ width: 350 }} role="presentation" onClick={closeDrawer}>
       <List>
         <ListItem divider>
           <ListItemIcon>
@@ -73,7 +75,12 @@ export default function SettingsDrawer({ children, wbAddress }) {
           />
         </ListItem>
         {host != null && port != null ? (
-          <ImpExpDump host={host} port={port} authtoken={authtoken} />
+          <ImpExpDump
+            host={host}
+            port={port}
+            authtoken={authtoken}
+            closeDrawer={() => setOpen(false)}
+          />
         ) : null}
       </List>
     </Box>
@@ -82,33 +89,34 @@ export default function SettingsDrawer({ children, wbAddress }) {
   return (
     <DrawerContext.Provider value={[setOpen, open]}>
       {children}
-      <Drawer open={open} onClose={toggleDrawer(false)}>
+      <Drawer open={open} onClose={closeDrawer}>
         {DrawerList}
       </Drawer>
     </DrawerContext.Provider>
   );
 }
 
-function ImpExpDump({ host, port, authtoken }) {
-  const VisuallyHiddenInput = styled("input")({
-    clip: "rect(0 0 0 0)",
-    clipPath: "inset(50%)",
-    height: 1,
-    overflow: "hidden",
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    whiteSpace: "nowrap",
-    width: 1,
-  });
+const VisuallyHiddenInput = styled("input")({
+  clip: "rect(0 0 0 0)",
+  clipPath: "inset(50%)",
+  height: 1,
+  overflow: "hidden",
+  position: "absolute",
+  bottom: 0,
+  left: 0,
+  whiteSpace: "nowrap",
+  width: 1,
+});
 
+function ImpExpDump({ host, port, authtoken, closeDrawer }) {
   const [status, setStatus] = React.useState();
   const [error, setError] = React.useState();
 
   const upload = (event) => {
-    handleFileUpload(event, host, port, authtoken)
+    handleFileUpload(event.target.files, host, port, authtoken)
       .then(setStatus)
       .catch(setError);
+    closeDrawer();
   };
 
   return (
@@ -125,13 +133,13 @@ function ImpExpDump({ host, port, authtoken }) {
           component="label"
           role={undefined}
           variant="contained"
-          tabIndex={-1}
+          // tabIndex={-1}
         >
           Upload
           <VisuallyHiddenInput
             type="file"
             accept=".json.gz"
-            onChange={(event) => console.log(event.target.files)}
+            onChange={upload}
             multiple
           />
         </Button>
@@ -151,7 +159,10 @@ function ImpExpDump({ host, port, authtoken }) {
           rel="noopener noreferrer"
           variant="contained"
           color="primary"
-          onClick={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            closeDrawer();
+          }}
         >
           Download
         </Button>
@@ -171,7 +182,10 @@ function ImpExpDump({ host, port, authtoken }) {
           rel="noopener noreferrer"
           variant="contained"
           color="primary"
-          onClick={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            closeDrawer();
+          }}
         >
           View
         </Button>
@@ -191,7 +205,10 @@ function ImpExpDump({ host, port, authtoken }) {
           rel="noopener noreferrer"
           variant="contained"
           color="primary"
-          onClick={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            closeDrawer();
+          }}
         >
           Download
         </Button>
@@ -244,13 +261,14 @@ function JwtCookieButton({ host, port, authtoken }) {
 
 async function handleFileUpload(files, host, port, authtoken) {
   const file = files[0];
-
-  console.log("file", file);
-
   const buffer = await file.arrayBuffer();
   const bytes = new Uint8Array(buffer);
 
   return new Promise((res, rej) => {
+    if (!file) {
+      rej(new Error("No file selected"));
+    }
+
     axios
       .post(`http://${host}:${port}/api/v1/import`, bytes, {
         headers: { Authorization: `Bearer ${authtoken}` },
