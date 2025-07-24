@@ -119,7 +119,7 @@ export default function ServerManagement({ children }) {
   );
   const addServer = React.useCallback(
     (server) => {
-      if (!serverAlreadyExists(addServer)) {
+      if (!serverAlreadyExists(server)[0]) {
         const newServers = [...knownServers, server];
         setKnownServers(newServers);
       } else {
