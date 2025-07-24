@@ -26,7 +26,7 @@ export default function ServerEditPanel({ setEditing }) {
   const [endpoints, setEndpoints] = React.useState([]);
   const [authToken, setAuthToken] = React.useState(null);
 
-  const { addServer, serverAlreadyExists } = useServers();
+  const { addServer, updateServer, serverAlreadyExists } = useServers();
 
   const server = {
     scheme,
@@ -34,16 +34,44 @@ export default function ServerEditPanel({ setEditing }) {
     authToken,
   };
 
-  const alreadyExists = serverAlreadyExists(server);
+  const [alreadyExists, i] = serverAlreadyExists(server);
   const error = alreadyExists ? "Server already exists" : "";
 
   const addNewServer = () => {
     addServer(server);
   };
+  const updateExistingServer = () => {
+    updateServer(i, server);
+  };
+
+  const fillEditMask = (server) => {
+    setScheme(server.scheme);
+    setEndpoints(server.endpoints);
+    setAuthToken(server.authToken);
+  };
+
+  const applyButton = alreadyExists ? (
+    <Button
+      sx={{ height: "100%" }}
+      variant="contained"
+      onClick={updateExistingServer}
+    >
+      Update
+    </Button>
+  ) : (
+    <Button
+      sx={{ height: "100%" }}
+      variant="contained"
+      onClick={addNewServer}
+      disabled={alreadyExists}
+    >
+      Add
+    </Button>
+  );
 
   return (
     <Stack alignItems="flex-start">
-      <ServerList sx={{ width: "100%" }} />
+      <ServerList sx={{ width: "100%" }} fillEditMask={fillEditMask} />
       <Divider flexItem orientation="horizontal" />
       <Grid container columnGap={2} paddingTop={2}>
         <Grid item container xs columnGap={2}>
@@ -82,13 +110,12 @@ export default function ServerEditPanel({ setEditing }) {
                     <Select
                       size="small"
                       labelId="scheme-select-label"
-                      value={scheme}
+                      defaultValue={scheme}
                       label="Scheme"
                       onChange={(e) => {
                         setScheme(e.target.value);
                       }}
                       sx={{ width: "6em" }}
-                      error={alreadyExists}
                     >
                       {schemes.map((s, i) => (
                         <MenuItem key={i} value={s}>
@@ -107,34 +134,26 @@ export default function ServerEditPanel({ setEditing }) {
                     label="Endpoints"
                     placeholder="host[:port] [,host2[:port2], …]"
                     variant="outlined"
-                    defaultValue={endpoints?.join(", ") || ""}
+                    value={endpoints?.join(", ") || ""}
                     onChange={(e) =>
                       setEndpoints(
                         e.target.value?.split(",").map((it) => it.trim()) || []
                       )
                     }
-                    error={alreadyExists}
                     sx={{ flexGrow: 1 }}
                   />
                 </Tooltip>
               </Stack>
-
               <TextField
                 size="small"
                 label="Auth Token"
                 variant="outlined"
                 sx={{ flexGrow: 1 }}
-                defaultValue={null}
+                value={authToken || ""}
                 onChange={(e) => setAuthToken(e.target.value)}
+                // type="password"
               />
-              <Button
-                sx={{ height: "100%" }}
-                variant="contained"
-                onClick={addNewServer}
-                disabled={alreadyExists}
-              >
-                Add
-              </Button>
+              {applyButton}
             </Stack>
           </Grid>
         </Grid>

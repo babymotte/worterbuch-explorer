@@ -5,7 +5,7 @@ import EditIcon from "@mui/icons-material/Edit";
 
 export const EditContext = React.createContext();
 
-export default function EditButton({ ...props }) {
+export default function EditButton({ wbkey, wbvalue, onClick, ...props }) {
   const [hovering, setHovering] = React.useState(false);
   const { setKey, setValue, setJson } = React.useContext(EditContext);
 
@@ -14,17 +14,18 @@ export default function EditButton({ ...props }) {
       <Tooltip
         title="Edit"
         sx={{ opacity: hovering ? 1.0 : 0.2 }}
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          setJson(true);
-          setKey(props.wbkey);
-          setValue(
-            props.wbvalue !== undefined
-              ? JSON.stringify(props.wbvalue, null, 2)
-              : ""
-          );
-        }}
+        onClick={
+          onClick ||
+          ((e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setJson(true);
+            setKey(wbkey);
+            setValue(
+              wbvalue !== undefined ? JSON.stringify(wbvalue, null, 2) : ""
+            );
+          })
+        }
       >
         <IconButton
           onMouseEnter={() => setHovering(true)}

@@ -103,15 +103,17 @@ export default function ServerManagement({ children }) {
   );
   const serverAlreadyExists = React.useCallback(
     (server) => {
+      let i = 0;
       for (const s of knownServers) {
         if (
           server.scheme === s.scheme &&
           endpointsEqual(server.endpoints, s.endpoints)
         ) {
-          return true;
+          return [true, i];
         }
+        i++;
       }
-      return false;
+      return [false, -1];
     },
     [knownServers]
   );
@@ -133,6 +135,18 @@ export default function ServerManagement({ children }) {
       }
       const newServers = [...knownServers];
       newServers.splice(server, 1);
+      setKnownServers(newServers);
+    },
+    [knownServers, navigate, selectedServer, setKnownServers]
+  );
+
+  const updateServer = React.useCallback(
+    (oldServer, newServer) => {
+      if (oldServer === selectedServer) {
+        navigate("/");
+      }
+      const newServers = [...knownServers];
+      newServers.splice(oldServer, 1, newServer);
       setKnownServers(newServers);
     },
     [knownServers, navigate, selectedServer, setKnownServers]
@@ -223,6 +237,7 @@ export default function ServerManagement({ children }) {
         selectServer,
         addServer,
         removeServer,
+        updateServer,
         connectionStatus,
         setConnectionStatus,
         serverAlreadyExists,

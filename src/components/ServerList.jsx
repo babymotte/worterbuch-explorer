@@ -7,8 +7,9 @@ import ServerIcon from "@mui/icons-material/Public";
 import { Stack } from "@mui/material";
 import { toUrl, useServers } from "./ServerManagement";
 import DeleteButton from "./DeleteButton";
+import EditButton from "./EditButton";
 
-export default function ServerList({ sx }) {
+export default function ServerList({ sx, fillEditMask }) {
   const { selectedServer, knownServers, selectServer, removeServer } =
     useServers();
 
@@ -25,6 +26,13 @@ export default function ServerList({ sx }) {
           <ServerIcon />
         </ListItemIcon>
         <ListItemText primary={url} />
+        <EditButton
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            fillEditMask(s);
+          }}
+        />
         <DeleteButton delete={() => removeServer(i)} />
       </ListItemButton>
     );
