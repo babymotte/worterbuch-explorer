@@ -140,7 +140,6 @@ function ImpExpDump({ host, port, authtoken, closeDrawer }) {
             type="file"
             accept=".json.gz"
             onChange={upload}
-            multiple
           />
         </Button>
       </ListItem>

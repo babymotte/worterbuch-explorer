@@ -3,6 +3,7 @@ import {
   Checkbox,
   FormControlLabel,
   Grid,
+  IconButton,
   Stack,
   Tooltip,
 } from "@mui/material";
@@ -11,11 +12,13 @@ import React from "react";
 import KeyEditor from "./KeyEditor";
 import { useSubscription } from "./Subscription";
 import useServerSubscriptions, {
+  sanitizeSubscriptionKey,
   urlDeEscapeSubscriptionKey,
 } from "./serverSubscriptions";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import FileDownloadIcon from "@mui/icons-material/FileDownload";
 
-export default function SubscriptionBar() {
+export default function SubscriptionBar({ pget }) {
   const {
     connectionStatus: { status },
   } = useServers();
@@ -71,6 +74,8 @@ export default function SubscriptionBar() {
     ]
   );
 
+  const saveMatches = useSaveMatches(sanitizeSubscriptionKey(pattern), pget);
+
   const toggleSubscribed = () => {
     if (subscribed) {
       setAutoSubscribe(false);
@@ -104,6 +109,11 @@ export default function SubscriptionBar() {
             onCommit={subscribeKey}
             includeRootHash
           />
+          <Tooltip title="Save matching values as JSON">
+            <IconButton onClick={saveMatches}>
+              <FileDownloadIcon sx={{ opacity: 0.4 }} />
+            </IconButton>
+          </Tooltip>
           <Tooltip title="Automatically subscribe when connected">
             <FormControlLabel
               control={
@@ -154,4 +164,34 @@ function getAutoSubscribe(searchParams, storedAutoSubscribe) {
   }
   searchParams.set("autoSubscribe", storedAutoSubscribe ? "1" : "0");
   return storedAutoSubscribe;
+}
+
+function useSaveMatches(pattern, pget) {
+  return () =>
+    pget(pattern, (kvps) => {
+      try {
+        const text = JSON.stringify(kvps);
+
+        // Create a Blob from the text
+        const blob = new Blob([text], { type: "text/plain" });
+
+        // Create a temporary URL for the Blob
+        const blobUrl = URL.createObjectURL(blob);
+
+        // Create a temporary anchor element
+        const a = document.createElement("a");
+        a.href = blobUrl;
+        a.download = `export-${pattern.replaceAll("/", "-")}.json`;
+
+        // Append the anchor to the document and trigger the click
+        document.body.appendChild(a);
+        a.click();
+
+        // Clean up
+        document.body.removeChild(a);
+        URL.revokeObjectURL(blobUrl);
+      } catch (err) {
+        console.error("Error downloading file:", err);
+      }
+    });
 }

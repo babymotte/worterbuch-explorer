@@ -4,7 +4,7 @@ import ServerEditPanel from "./ServerEditPanel";
 import ServerStatusPanel from "./ServerStatusPanel";
 import SubscriptionBar from "./SubscriptionBar";
 
-export default function BottomPanel() {
+export default function BottomPanel({ pget }) {
   const [editing, setEditing] = React.useState(false);
   return (
     <Paper>
@@ -15,7 +15,7 @@ export default function BottomPanel() {
           <ServerStatusPanel setEditing={setEditing} />
         )}
 
-        <SubscriptionBar />
+        <SubscriptionBar pget={pget} />
       </Stack>
     </Paper>
   );

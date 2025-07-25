@@ -1,5 +1,6 @@
 import {
   Button,
+  IconButton,
   Stack,
   Switch,
   TextField,
@@ -8,6 +9,8 @@ import {
 } from "@mui/material";
 import React from "react";
 import { EditContext } from "./EditButton";
+import UploadIcon from "@mui/icons-material/Upload";
+import styled from "@emotion/styled";
 
 export default function SetPanel({ set }) {
   const { setKey, setValue, key, value, json, setJson } =
@@ -51,7 +54,8 @@ export default function SetPanel({ set }) {
 
   return json ? (
     <FullSetPanel
-      set={setKeyValue}
+      setKeyValue={setKeyValue}
+      set={set}
       wbkey={key}
       setWbKey={setKey}
       wbvalue={json ? value : stringValue}
@@ -64,7 +68,8 @@ export default function SetPanel({ set }) {
     />
   ) : (
     <CompactSetPanel
-      set={setKeyValue}
+      setKeyValue={setKeyValue}
+      set={set}
       wbkey={key}
       setWbKey={setKey}
       wbvalue={json ? value : stringValue}
@@ -78,6 +83,7 @@ export default function SetPanel({ set }) {
 }
 
 function CompactSetPanel({
+  setKeyValue,
   set,
   wbkey,
   setWbKey,
@@ -106,17 +112,20 @@ function CompactSetPanel({
         // error={!key}
       />
       <Typography>=</Typography>
-      <TextField
-        size="small"
-        label="Value"
-        multiline
-        onChange={(e) => setWbValue(e.target.value)}
-        value={wbvalue}
-        error={!valueValid}
-        sx={{ flexGrow: 1 }}
-        maxRows={6}
-        onKeyDown={checkSet}
-      />
+      <Stack direction="row" spacing={1}>
+        <TextField
+          size="small"
+          label="Value"
+          multiline
+          onChange={(e) => setWbValue(e.target.value)}
+          value={wbvalue}
+          error={!valueValid}
+          sx={{ flexGrow: 1 }}
+          maxRows={6}
+          onKeyDown={checkSet}
+        />
+        <UploadButton set={set} />
+      </Stack>
       <Stack direction="row" alignItems="center">
         <Typography>String</Typography>
         <Switch checked={json} onChange={(e) => setJson(e.target.checked)} />
@@ -125,7 +134,7 @@ function CompactSetPanel({
       <Button
         variant="contained"
         disabled={!wbkey || !valueValid}
-        onClick={set}
+        onClick={setKeyValue}
       >
         Set
       </Button>
@@ -134,6 +143,7 @@ function CompactSetPanel({
 }
 
 function FullSetPanel({
+  setKeyValue,
   set,
   wbkey,
   setWbKey,
@@ -161,7 +171,7 @@ function FullSetPanel({
         <Button
           variant="contained"
           disabled={!wbkey || !valueValid}
-          onClick={set}
+          onClick={setKeyValue}
         >
           Set
         </Button>
@@ -175,19 +185,69 @@ function FullSetPanel({
         error={!wbkey}
         onKeyDown={checkSet}
       />
-      <Tooltip title={error}>
-        <TextField
-          size="small"
-          label="Value"
-          multiline
-          onChange={(e) => setWbValue(e.target.value)}
-          value={wbvalue}
-          error={!valueValid}
-          sx={{ flexGrow: 1 }}
-          maxRows={12}
-          onKeyDown={checkSet}
-        />
-      </Tooltip>
+      <Stack direction="row" spacing={1}>
+        <Tooltip title={error}>
+          <TextField
+            size="small"
+            label="Value"
+            multiline
+            onChange={(e) => setWbValue(e.target.value)}
+            value={wbvalue}
+            error={!valueValid}
+            sx={{ flexGrow: 1 }}
+            maxRows={12}
+            onKeyDown={checkSet}
+          />
+        </Tooltip>
+        <UploadButton set={set} />
+      </Stack>
     </Stack>
   );
+}
+
+const VisuallyHiddenInput = styled("input")({
+  clip: "rect(0 0 0 0)",
+  clipPath: "inset(50%)",
+  height: 1,
+  overflow: "hidden",
+  position: "absolute",
+  bottom: 0,
+  left: 0,
+  whiteSpace: "nowrap",
+  width: 1,
+});
+
+const UploadButton = ({ set }) => {
+  return (
+    <Tooltip title="Set values from JSON file">
+      <IconButton role={undefined} component="label">
+        <VisuallyHiddenInput
+          type="file"
+          accept=".json"
+          onChange={(event) => setValuesFromFile(event.target.files[0], set)}
+        />
+        <UploadIcon sx={{ opacity: 0.4 }} />
+      </IconButton>
+    </Tooltip>
+  );
+};
+
+function setValuesFromFile(file, set) {
+  if (!file) return;
+
+  const reader = new FileReader();
+
+  reader.onload = function (e) {
+    const content = e.target.result;
+    const keyValuePairs = JSON.parse(content);
+    for (const kvp of keyValuePairs) {
+      set(kvp.key, kvp.value);
+    }
+  };
+
+  reader.onerror = function (e) {
+    console.error("Error reading file:", e);
+  };
+
+  reader.readAsText(file);
 }

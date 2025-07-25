@@ -296,10 +296,19 @@ export default function App() {
     [wb]
   );
 
+  const pget = React.useCallback(
+    (pattern, callback) => {
+      if (wb) {
+        wb.pGet(pattern).then(callback);
+      }
+    },
+    [wb]
+  );
+
   const pdelete = React.useCallback(
     (requestPattern) => {
       if (wb) {
-        wb.pDelete(requestPattern);
+        wb.pDelete(requestPattern, true);
       }
     },
     [wb]
@@ -333,7 +342,7 @@ export default function App() {
                 </Stack>
                 <SetPanel set={set} />
                 <Ornament />
-                <BottomPanel />
+                <BottomPanel pget={pget} />
               </Stack>
               <Snackbar
                 open={snackbarOpen}

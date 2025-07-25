@@ -46,7 +46,7 @@ export default function useServerSubscriptions() {
   return useSubscriptionsForServer(selectedServer, knownServers);
 }
 
-function sanitizeSubscriptionKey(key) {
+export function sanitizeSubscriptionKey(key) {
   let sanitizedKey = key;
   if (key.length === 0) {
     sanitizedKey = "#";
