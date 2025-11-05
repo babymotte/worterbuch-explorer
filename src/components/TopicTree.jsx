@@ -7,6 +7,8 @@ import CopyButton from "./CopyButton";
 import EditButton from "./EditButton";
 import { useWb } from "./Worterbuch";
 
+const LINK_REGEX = /https?:\/\/.+/;
+
 export default function TopicTree({ data, pdelete }) {
   const treeItems = toTreeItems(data, pdelete);
 
@@ -115,8 +117,28 @@ function Label({ path, id, value }) {
   );
 }
 
-function LinkLabel({ path, value, shortValue }) {
-  let hrf = toHref(path, value);
+function LinkLabel({ value, shortValue }) {
+  return (
+    <Link
+      href={value}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={(e) => {
+        e.stopPropagation();
+      }}
+    >
+      <Typography
+        display="inline-block"
+        style={{ fontWeight: 600, marginInlineStart: 4 }}
+      >
+        {shortValue}
+      </Typography>
+    </Link>
+  );
+}
+
+function InternalLinkLabel({ path, value, shortValue }) {
+  let hrf = toInternalHref(path, value);
   return (
     <Link
       href={hrf}
@@ -147,7 +169,7 @@ function ArrayLabel({ path, value, shortValue }) {
 function LinkArrayLabel({ path, value }) {
   const items = value.map((e, i) => [
     typeof e === "string" && e.startsWith("@") ? (
-      <LinkLabel path={path} value={e} shortValue={JSON.stringify(e)} />
+      <InternalLinkLabel path={path} value={e} shortValue={JSON.stringify(e)} />
     ) : (
       <DefaultLabel shortValue={JSON.stringify(e)} />
     ),
@@ -176,7 +198,11 @@ function DefaultLabel({ shortValue }) {
 
 function ValueRenderer({ path, value, shortValue }) {
   if (typeof value === "string" && value.startsWith("@")) {
-    return <LinkLabel path={path} value={value} shortValue={shortValue} />;
+    return (
+      <InternalLinkLabel path={path} value={value} shortValue={shortValue} />
+    );
+  } else if (typeof value === "string" && LINK_REGEX.test(value)) {
+    return <LinkLabel value={value} shortValue={shortValue} />;
   } else if (Array.isArray(value)) {
     return <ArrayLabel path={path} value={value} shortValue={shortValue} />;
   } else {
@@ -184,11 +210,11 @@ function ValueRenderer({ path, value, shortValue }) {
   }
 }
 
-function toHref(key, value) {
+function toInternalHref(key, value) {
   let link = value.substring(1);
 
   if (link.startsWith("@")) {
-    return toHref(key, link);
+    return toInternalHref(key, link);
   } else {
     if (link.startsWith("./") || link.startsWith("../")) {
       return "/" + key + "/" + link + "/?autoSubscribe=1";
