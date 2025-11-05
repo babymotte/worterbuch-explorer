@@ -9,6 +9,13 @@ import MuiAlert from "@mui/material/Alert";
 import ListItemText from "@mui/material/ListItemText";
 import ListItemIcon from "@mui/material/ListItemIcon";
 
+import KeyIcon from "@mui/icons-material/Key";
+import FileCopyIcon from "@mui/icons-material/FileCopy";
+import DataObjectIcon from "@mui/icons-material/DataObject";
+import LinkIcon from "@mui/icons-material/Link";
+import { useServers } from "./ServerManagement";
+import { useConnectedAddress } from "./lastConnectedAddresses";
+
 export default function CopyButton({ ...props }) {
   const [hovering, setHovering] = React.useState(false);
   const [contextMenu, setContextMenu] = React.useState(null);
@@ -68,7 +75,11 @@ export default function CopyButton({ ...props }) {
 
   const copyValue = (e) => {
     if (navigator?.clipboard?.writeText) {
-      navigator.clipboard.writeText(JSON.stringify(props.wbvalue));
+      if (typeof props.wbvalue === "string") {
+        navigator.clipboard.writeText(props.wbvalue);
+      } else {
+        navigator.clipboard.writeText(JSON.stringify(props.wbvalue));
+      }
       setSuccessText("Copied value to clipboard.");
       setSuccessOpen(true);
     } else {
@@ -83,6 +94,23 @@ export default function CopyButton({ ...props }) {
         JSON.stringify({ key: props.wbkey, value: props.wbvalue })
       );
       setSuccessText("Copied JSON to clipboard.");
+      setSuccessOpen(true);
+    } else {
+      setErrorOpen(true);
+    }
+    closeMenu(e);
+  };
+
+  let server = useConnectedAddress();
+
+  const copyLink = (e) => {
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(
+        server
+          .replace("ws", "http")
+          .replace("/ws", `/api/v1/get/${props.wbkey}?raw`)
+      );
+      setSuccessText("Copied link to clipboard.");
       setSuccessOpen(true);
     } else {
       setErrorOpen(true);
@@ -121,21 +149,27 @@ export default function CopyButton({ ...props }) {
       >
         <MenuItem onClick={copyKey}>
           <ListItemIcon>
-            <ContentCopyIcon fontSize="small" />
+            <KeyIcon fontSize="small" />
           </ListItemIcon>
           <ListItemText>Copy Key</ListItemText>
         </MenuItem>
         <MenuItem onClick={copyValue}>
           <ListItemIcon>
-            <ContentCopyIcon fontSize="small" />
+            <FileCopyIcon fontSize="small" />
           </ListItemIcon>
           <ListItemText>Copy Value</ListItemText>
         </MenuItem>
         <MenuItem onClick={copyJson}>
           <ListItemIcon>
-            <ContentCopyIcon fontSize="small" />
+            <DataObjectIcon fontSize="small" />
           </ListItemIcon>
           <ListItemText>Copy JSON</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={copyLink}>
+          <ListItemIcon>
+            <LinkIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Copy Link</ListItemText>
         </MenuItem>
       </Menu>
       <Snackbar

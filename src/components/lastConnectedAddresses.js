@@ -1,4 +1,5 @@
 import React from "react";
+import { useServers } from "./ServerManagement";
 
 String.prototype.hashCode = function () {
   var hash = 0,
@@ -12,6 +13,27 @@ String.prototype.hashCode = function () {
   }
   return hash;
 };
+
+export function useConnectedAddress() {
+  const {knownServers, selectedServer} = useServers();
+  let server = knownServers[selectedServer];
+
+  return useConnectedAddressForServer(server);
+}
+
+function useConnectedAddressForServer(server) {
+
+
+  if (!localStorage) {
+    return;
+  }
+
+  return localStorage.getItem(
+    "worterbuch.explorer.connected.server." +
+      Math.abs(JSON.stringify(server).hashCode()),
+  );
+
+}
 
 export function storeConnectedAddress(address, server) {
   if (!address) {
