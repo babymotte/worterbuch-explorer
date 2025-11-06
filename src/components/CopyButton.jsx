@@ -108,7 +108,7 @@ export default function CopyButton({ ...props }) {
       navigator.clipboard.writeText(
         server
           .replace("ws", "http")
-          .replace("/ws", `/api/v1/get/${props.wbkey}?raw`)
+          .replace("/ws", `/api/v1/get/${props.wbkey}`)
       );
       setSuccessText("Copied link to clipboard.");
       setSuccessOpen(true);

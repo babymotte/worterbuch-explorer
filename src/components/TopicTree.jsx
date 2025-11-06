@@ -6,6 +6,7 @@ import DeleteButton from "./DeleteButton";
 import CopyButton from "./CopyButton";
 import EditButton from "./EditButton";
 import { useWb } from "./Worterbuch";
+import { OpenLinkButton } from "./OpenLinkButton";
 
 const LINK_REGEX = /https?:\/\/.+/;
 
@@ -57,6 +58,7 @@ function toTreeItem(path, item, id, pdelete) {
           <Typography display="inline-block">{id}</Typography>
         )}
         <Stack direction="row">
+          <OpenLinkButton path={path} wbvalue={item.value} />
           <EditButton
             wbkey={path}
             wbvalue={item.value}
