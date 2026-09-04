@@ -11,6 +11,7 @@ import Subscription from "./Subscription";
 import Worterbuch from "./Worterbuch";
 import { connect } from "worterbuch-js";
 import SettingsDrawer from "./SettingsDrawer";
+import LockPanel from "./LockPanel";
 import {
   storeConnectedAddress,
   useSortAddresses,
@@ -338,6 +339,7 @@ export default function App() {
                 <Stack flexGrow={1} overflow="auto">
                   <Stack padding={2} spacing={2}>
                     <TopicTree data={data} pdelete={pdelete} />
+                    <LockPanel />
                   </Stack>
                 </Stack>
                 <SetPanel set={set} />
