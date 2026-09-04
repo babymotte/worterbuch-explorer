@@ -152,7 +152,9 @@ export default function App() {
         wb.unsubscribe(subscriptionTidRef.current);
         subscriptionTidRef.current = null;
       }
-      subscribed(false);
+      if (subscribed) {
+        subscribed(false);
+      }
       clearData();
     },
     [clearData, wb],
@@ -179,12 +181,18 @@ export default function App() {
           false,
           (err) => {
             showSnackbar("error", err.metadata);
-            subscribed(false);
+            if (subscribed) {
+              subscribed(false);
+            }
           },
         );
-        subscribed(true);
+        if (subscribed) {
+          subscribed(true);
+        }
       } else {
-        subscribed(false);
+        if (subscribed) {
+          subscribed(false);
+        }
       }
     },
     [clearData, showSnackbar, unsubscribe, wb],

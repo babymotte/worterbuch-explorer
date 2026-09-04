@@ -9,6 +9,7 @@ import {
 } from "@mui/material";
 import React from "react";
 import AddIcon from "@mui/icons-material/Add";
+import LinkIcon from "@mui/icons-material/Link";
 import DeleteIcon from "@mui/icons-material/Delete";
 import LockIcon from "@mui/icons-material/Lock";
 import LockClockIcon from "@mui/icons-material/LockClock";
@@ -16,6 +17,9 @@ import LockOpenIcon from "@mui/icons-material/LockOpen";
 import KeyEditor from "./KeyEditor";
 import { useWb } from "./Worterbuch";
 import { WbError } from "worterbuch-js";
+import useServerSubscriptions from "./serverSubscriptions";
+import { useNavigate } from "react-router-dom";
+import { useSubscription } from "./Subscription";
 
 let nextId = 0;
 
@@ -183,7 +187,12 @@ export default function LockPanel() {
           remove={() => removeLock(lock.id)}
         />
       ))}
-      <AddLockButton onClick={addLock} />
+      <Stack direction="row" alignItems="center" spacing={2}>
+        <AddLockButton onClick={addLock} />
+        <Box sx={{ flexGrow: 1 }} />
+        <SubscribeButton />
+      </Stack>
+
       <Snackbar
         open={lockError != null}
         autoHideDuration={6000}
@@ -293,6 +302,39 @@ function AddLockButton({ onClick }) {
           onMouseLeave={() => setHovering(false)}
         >
           <AddIcon />
+        </IconButton>
+      </Tooltip>
+    </Box>
+  );
+}
+
+function SubscribeButton() {
+  const [hovering, setHovering] = React.useState(false);
+  const { setSubscription } = useServerSubscriptions();
+
+  const { subscribe } = useSubscription();
+  const navigate = useNavigate();
+
+  const subscribeKey = React.useCallback(
+    (key) => {
+      const [sanitizedKey, urlSegment] = setSubscription(key);
+      subscribe(sanitizedKey);
+      const path = "/" + urlSegment;
+      navigate(path);
+    },
+    [navigate, setSubscription, subscribe],
+  );
+
+  return (
+    <Box sx={{ alignSelf: "flex-start" }}>
+      <Tooltip title="View Locks" sx={{ opacity: hovering ? 1.0 : 0.2 }}>
+        <IconButton
+          size="small"
+          onClick={() => subscribeKey("$SYS/locks/#")}
+          onMouseEnter={() => setHovering(true)}
+          onMouseLeave={() => setHovering(false)}
+        >
+          <LinkIcon />
         </IconButton>
       </Tooltip>
     </Box>
