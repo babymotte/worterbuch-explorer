@@ -33,6 +33,23 @@ export default function LockPanel() {
     [wb]
   );
 
+  const releaseLock = React.useCallback(
+    (id) => {
+      setLocks((locks) => {
+        const lock = locks.find((lock) => lock.id === id);
+        if (lock?.locked && wb) {
+          wb.releaseLock(lock.key).catch((err) =>
+            console.error("Error releasing lock:", err)
+          );
+        }
+        return locks.map((lock) =>
+          lock.id === id ? { ...lock, locked: false } : lock
+        );
+      });
+    },
+    [wb]
+  );
+
   const setLockKey = React.useCallback((id, key) => {
     setLocks((locks) =>
       locks.map((lock) => (lock.id === id ? { ...lock, key } : lock))
@@ -81,6 +98,7 @@ export default function LockPanel() {
           locked={lock.locked}
           setLockKey={(key) => setLockKey(lock.id, key)}
           lockNow={() => lockNow(lock.id, lock.key)}
+          releaseLock={() => releaseLock(lock.id)}
           remove={() => removeLock(lock.id)}
         />
       ))}
@@ -93,7 +111,15 @@ export default function LockPanel() {
   );
 }
 
-function LockRow({ lockKey, locking, locked, setLockKey, lockNow, remove }) {
+function LockRow({
+  lockKey,
+  locking,
+  locked,
+  setLockKey,
+  lockNow,
+  releaseLock,
+  remove,
+}) {
   const disabled = locking || locked;
   return (
     <Stack direction="row" alignItems="center" spacing={2}>
@@ -109,11 +135,18 @@ function LockRow({ lockKey, locking, locked, setLockKey, lockNow, remove }) {
         disabled={!lockKey || disabled}
         onClick={lockNow}
       >
-        Lock Now
+        {locked ? "Locked" : "Lock Now"}
       </Button>
-      <Button variant="outlined" disabled={!lockKey || disabled}>
-        Try Lock
-      </Button>
+      {!locked && (
+        <Button variant="outlined" disabled={!lockKey || disabled}>
+          Try Lock
+        </Button>
+      )}
+      {locked && (
+        <Button variant="outlined" onClick={releaseLock}>
+          Release Lock
+        </Button>
+      )}
       <Tooltip title="Remove">
         <IconButton onClick={remove}>
           <DeleteIcon />
