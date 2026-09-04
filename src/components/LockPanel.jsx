@@ -221,6 +221,7 @@ function LockRow({
         label="Key"
         keyStr={lockKey}
         onChange={setLockKey}
+        onCommit={lockNow}
         disabled={disabled}
       />
       {!waiting && (
