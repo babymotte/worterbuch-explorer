@@ -1,20 +1,54 @@
-import { Button, IconButton, Stack, Tooltip } from "@mui/material";
+import {
+  Alert,
+  Button,
+  IconButton,
+  Snackbar,
+  Stack,
+  Tooltip,
+} from "@mui/material";
 import React from "react";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import KeyEditor from "./KeyEditor";
 import { useWb } from "./Worterbuch";
+import { WbError } from "worterbuch-js";
 
 let nextId = 0;
 
 export default function LockPanel() {
   const wb = useWb();
   const [locks, setLocks] = React.useState([]);
+  const [lockError, setLockError] = React.useState(null);
+  const closeLockError = React.useCallback((event, reason) => {
+    if (reason === "clickaway") {
+      return;
+    }
+    setLockError(null);
+  }, []);
+
+  // wb.lock() only ever resolves true/false and swallows the server's error
+  // message on failure, so the last error received on the connection is
+  // tracked here and correlated (by sequence number) with a failed lock
+  // attempt to recover the actual reason it failed.
+  const lastErrorRef = React.useRef({ seq: 0, err: null });
+  React.useEffect(() => {
+    if (!wb) {
+      return;
+    }
+    const previousOnError = wb.onerror;
+    wb.onerror = (err) => {
+      lastErrorRef.current = { seq: lastErrorRef.current.seq + 1, err };
+      previousOnError?.(err);
+    };
+    return () => {
+      wb.onerror = previousOnError;
+    };
+  }, [wb]);
 
   const addLock = React.useCallback(() => {
     setLocks((locks) => [
       ...locks,
-      { id: nextId++, key: "", locking: false, locked: false },
+      { id: nextId++, key: "", locking: false, waiting: false, locked: false },
     ]);
   }, []);
 
@@ -66,6 +100,7 @@ export default function LockPanel() {
           lock.id === id ? { ...lock, locking: true } : lock
         )
       );
+      const seqBefore = lastErrorRef.current.seq;
       wb.lock(key)
         .then((acquired) => {
           setLocks((locks) =>
@@ -75,6 +110,14 @@ export default function LockPanel() {
                 : lock
             )
           );
+          if (!acquired) {
+            const { seq, err } = lastErrorRef.current;
+            const message =
+              seq !== seqBefore
+                ? new WbError(err).message
+                : "Lock is already held by another client";
+            setLockError(message);
+          }
         })
         .catch((err) => {
           console.error("Error acquiring lock:", err);
@@ -83,6 +126,40 @@ export default function LockPanel() {
               lock.id === id ? { ...lock, locking: false } : lock
             )
           );
+          setLockError(err.message);
+        });
+    },
+    [wb]
+  );
+
+  const tryLock = React.useCallback(
+    (id, key) => {
+      if (!wb || !key) {
+        return;
+      }
+      setLocks((locks) =>
+        locks.map((lock) =>
+          lock.id === id ? { ...lock, waiting: true } : lock
+        )
+      );
+      wb.acquireLock(key)
+        .then(() => {
+          setLocks((locks) =>
+            locks.map((lock) =>
+              lock.id === id
+                ? { ...lock, waiting: false, locked: true }
+                : lock
+            )
+          );
+        })
+        .catch((err) => {
+          console.error("Error acquiring lock:", err);
+          setLocks((locks) =>
+            locks.map((lock) =>
+              lock.id === id ? { ...lock, waiting: false } : lock
+            )
+          );
+          setLockError(err.message);
         });
     },
     [wb]
@@ -95,9 +172,11 @@ export default function LockPanel() {
           key={lock.id}
           lockKey={lock.key}
           locking={lock.locking}
+          waiting={lock.waiting}
           locked={lock.locked}
           setLockKey={(key) => setLockKey(lock.id, key)}
           lockNow={() => lockNow(lock.id, lock.key)}
+          tryLock={() => tryLock(lock.id, lock.key)}
           releaseLock={() => releaseLock(lock.id)}
           remove={() => removeLock(lock.id)}
         />
@@ -107,6 +186,20 @@ export default function LockPanel() {
           <AddIcon />
         </IconButton>
       </Tooltip>
+      <Snackbar
+        open={lockError != null}
+        autoHideDuration={6000}
+        onClose={closeLockError}
+      >
+        <Alert
+          onClose={closeLockError}
+          severity="error"
+          variant="filled"
+          sx={{ width: "100%" }}
+        >
+          Could not acquire lock: {lockError}
+        </Alert>
+      </Snackbar>
     </Stack>
   );
 }
@@ -114,13 +207,15 @@ export default function LockPanel() {
 function LockRow({
   lockKey,
   locking,
+  waiting,
   locked,
   setLockKey,
   lockNow,
+  tryLock,
   releaseLock,
   remove,
 }) {
-  const disabled = locking || locked;
+  const disabled = locking || waiting || locked;
   return (
     <Stack direction="row" alignItems="center" spacing={2}>
       <KeyEditor
@@ -130,16 +225,22 @@ function LockRow({
         onChange={setLockKey}
         disabled={disabled}
       />
-      <Button
-        variant="contained"
-        disabled={!lockKey || disabled}
-        onClick={lockNow}
-      >
-        {locked ? "Locked" : "Lock Now"}
-      </Button>
+      {!waiting && (
+        <Button
+          variant="contained"
+          disabled={!lockKey || disabled}
+          onClick={lockNow}
+        >
+          {locked ? "Locked" : "Lock Now"}
+        </Button>
+      )}
       {!locked && (
-        <Button variant="outlined" disabled={!lockKey || disabled}>
-          Try Lock
+        <Button
+          variant="outlined"
+          disabled={!lockKey || disabled}
+          onClick={tryLock}
+        >
+          {waiting ? "Waiting for Lock" : "Try Lock"}
         </Button>
       )}
       {locked && (
@@ -147,10 +248,12 @@ function LockRow({
           Release Lock
         </Button>
       )}
-      <Tooltip title="Remove">
-        <IconButton onClick={remove}>
-          <DeleteIcon />
-        </IconButton>
+      <Tooltip title={waiting ? "Cannot remove while waiting for lock" : "Remove"}>
+        <span>
+          <IconButton onClick={remove} disabled={waiting}>
+            <DeleteIcon />
+          </IconButton>
+        </span>
       </Tooltip>
     </Stack>
   );
