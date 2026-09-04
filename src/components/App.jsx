@@ -4,7 +4,18 @@ import SortedMap from "collections/sorted-map";
 import BottomPanel from "./BottomPanel";
 import { useToUrls, useServers } from "./ServerManagement";
 import Theme from "./Theme";
-import { Alert, Box, Snackbar, Stack, useTheme } from "@mui/material";
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Alert,
+  Box,
+  Snackbar,
+  Stack,
+  Typography,
+  useTheme,
+} from "@mui/material";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import SetPanel from "./SetPanel";
 import { EditContext } from "./EditButton";
 import Subscription from "./Subscription";
@@ -112,7 +123,7 @@ export default function App() {
         }
       }
     },
-    [setConnectionStatus]
+    [setConnectionStatus],
   );
 
   const [wb, setWb] = React.useState();
@@ -143,7 +154,7 @@ export default function App() {
       subscribed(false);
       clearData();
     },
-    [clearData, wb]
+    [clearData, wb],
   );
   const subscribe = React.useCallback(
     (requestPattern, subscribed) => {
@@ -168,14 +179,14 @@ export default function App() {
           (err) => {
             showSnackbar("error", err.metadata);
             subscribed(false);
-          }
+          },
         );
         subscribed(true);
       } else {
         subscribed(false);
       }
     },
-    [clearData, showSnackbar, unsubscribe, wb]
+    [clearData, showSnackbar, unsubscribe, wb],
   );
 
   React.useEffect(() => {
@@ -294,7 +305,7 @@ export default function App() {
         wb.set(key, value);
       }
     },
-    [wb]
+    [wb],
   );
 
   const pget = React.useCallback(
@@ -303,7 +314,7 @@ export default function App() {
         wb.pGet(pattern).then(callback);
       }
     },
-    [wb]
+    [wb],
   );
 
   const pdelete = React.useCallback(
@@ -312,7 +323,7 @@ export default function App() {
         wb.pDelete(requestPattern, true);
       }
     },
-    [wb]
+    [wb],
   );
 
   const [editKey, setEditKey] = React.useState("");
@@ -328,6 +339,8 @@ export default function App() {
     setJson,
   };
 
+  const [treeExpanded, setTreeExpanded] = React.useState(true);
+
   return (
     <Theme>
       <SettingsDrawer wbAddress={{ address: wb?.serverAddress, authtoken }}>
@@ -336,13 +349,65 @@ export default function App() {
             <EditContext.Provider value={editContext}>
               <Stack sx={{ width: "100vw", height: "100vh" }}>
                 <Ornament />
-                <Stack flexGrow={1} overflow="auto">
-                  <Stack padding={2} spacing={2}>
-                    <TopicTree data={data} pdelete={pdelete} />
-                    <LockPanel />
-                  </Stack>
+                <Stack flexGrow={1} overflow="auto" minHeight={0}>
+                  <Accordion
+                    expanded={treeExpanded}
+                    onChange={(e, isExpanded) => setTreeExpanded(isExpanded)}
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column",
+                      flexGrow: treeExpanded ? 1 : 0,
+                      minHeight: 0,
+                      backgroundColor: "transparent",
+                      backgroundImage: "none",
+                      "& .MuiCollapse-root, & .MuiCollapse-wrapper, & .MuiCollapse-wrapperInner, & .MuiAccordion-region":
+                        {
+                          display: "flex",
+                          flexDirection: "column",
+                          flexGrow: 1,
+                          minHeight: 0,
+                        },
+                    }}
+                  >
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                      <Typography>Keys / Values</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails
+                      sx={{
+                        display: "flex",
+                        flexDirection: "column",
+                        flexGrow: 1,
+                        minHeight: 0,
+                        padding: 0,
+                      }}
+                    >
+                      <Stack
+                        flexGrow={1}
+                        minHeight={0}
+                        overflow="auto"
+                        padding={2}
+                      >
+                        <TopicTree data={data} pdelete={pdelete} />
+                      </Stack>
+                      <SetPanel set={set} />
+                    </AccordionDetails>
+                  </Accordion>
+                  <Accordion
+                    defaultExpanded={false}
+                    sx={{
+                      flexShrink: 0,
+                      backgroundColor: "transparent",
+                      backgroundImage: "none",
+                    }}
+                  >
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                      <Typography>Locks</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      <LockPanel />
+                    </AccordionDetails>
+                  </Accordion>
                 </Stack>
-                <SetPanel set={set} />
                 <Ornament />
                 <BottomPanel pget={pget} />
               </Stack>
