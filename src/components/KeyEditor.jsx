@@ -9,6 +9,7 @@ export default function KeyEditor({
   onCommit,
   includeRootHash,
   error,
+  disabled,
   sx,
 }) {
   const [internalKey, setInternalKey] = React.useState("");
@@ -22,6 +23,7 @@ export default function KeyEditor({
     <Autocomplete
       freeSolo
       disableClearable
+      disabled={disabled}
       options={keySuggestions}
       inputValue={key}
       onInputChange={(event, newInputValue) => setKey(newInputValue)}
