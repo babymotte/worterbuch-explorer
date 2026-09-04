@@ -17,6 +17,7 @@ import { styled } from "@mui/material/styles";
 import axios from "axios";
 import CookieIcon from "@mui/icons-material/Cookie";
 import MemoryIcon from "@mui/icons-material/Memory";
+import { Typography } from "@mui/material";
 
 const DrawerContext = React.createContext();
 
@@ -24,7 +25,7 @@ export function useDrawer() {
   return React.useContext(DrawerContext);
 }
 
-export default function SettingsDrawer({ children, wbAddress }) {
+export default function SettingsDrawer({ children, wbAddress, clientID }) {
   const [open, setOpen] = React.useState(false);
 
   const closeDrawer = (e, reason) => {
@@ -53,16 +54,19 @@ export default function SettingsDrawer({ children, wbAddress }) {
         match[4] != null
           ? match[4]
           : scheme == "ws"
-          ? 80
-          : scheme == "wss"
-          ? 443
-          : null;
+            ? 80
+            : scheme == "wss"
+              ? 443
+              : null;
     }
   }
 
   const DrawerList = (
     <Box sx={{ width: 350 }} role="presentation" onClick={closeDrawer}>
       <List>
+        <ListItem divider>
+          <Typography>{clientID}</Typography>
+        </ListItem>
         <ListItem divider>
           <ListItemIcon>
             {darkMode ? <DarkModeIcon /> : <LightModeIcon />}

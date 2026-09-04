@@ -344,7 +344,10 @@ export default function App() {
 
   return (
     <Theme>
-      <SettingsDrawer wbAddress={{ address: wb?.serverAddress, authtoken }}>
+      <SettingsDrawer
+        wbAddress={{ address: wb?.serverAddress, authtoken }}
+        clientID={wb?.clientId()}
+      >
         <Worterbuch wb={wb}>
           <Subscription subscribe={subscribe} unsubscribe={unsubscribe}>
             <EditContext.Provider value={editContext}>
