@@ -10,6 +10,7 @@ import {
   AccordionSummary,
   Alert,
   Box,
+  Divider,
   Snackbar,
   Stack,
   Typography,
@@ -349,64 +350,12 @@ export default function App() {
             <EditContext.Provider value={editContext}>
               <Stack sx={{ width: "100vw", height: "100vh" }}>
                 <Ornament />
-                <Stack flexGrow={1} overflow="auto" minHeight={0}>
-                  <Accordion
-                    expanded={treeExpanded}
-                    onChange={(e, isExpanded) => setTreeExpanded(isExpanded)}
-                    sx={{
-                      display: "flex",
-                      flexDirection: "column",
-                      flexGrow: treeExpanded ? 1 : 0,
-                      minHeight: 0,
-                      backgroundColor: "transparent",
-                      backgroundImage: "none",
-                      "& .MuiCollapse-root, & .MuiCollapse-wrapper, & .MuiCollapse-wrapperInner, & .MuiAccordion-region":
-                        {
-                          display: "flex",
-                          flexDirection: "column",
-                          flexGrow: 1,
-                          minHeight: 0,
-                        },
-                    }}
-                  >
-                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                      <Typography>Keys / Values</Typography>
-                    </AccordionSummary>
-                    <AccordionDetails
-                      sx={{
-                        display: "flex",
-                        flexDirection: "column",
-                        flexGrow: 1,
-                        minHeight: 0,
-                        padding: 0,
-                      }}
-                    >
-                      <Stack
-                        flexGrow={1}
-                        minHeight={0}
-                        overflow="auto"
-                        padding={2}
-                      >
-                        <TopicTree data={data} pdelete={pdelete} />
-                      </Stack>
-                      <SetPanel set={set} />
-                    </AccordionDetails>
-                  </Accordion>
-                  <Accordion
-                    defaultExpanded={false}
-                    sx={{
-                      flexShrink: 0,
-                      backgroundColor: "transparent",
-                      backgroundImage: "none",
-                    }}
-                  >
-                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                      <Typography>Locks</Typography>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                      <LockPanel />
-                    </AccordionDetails>
-                  </Accordion>
+                <Stack flexGrow={1} minHeight={0}>
+                  <Locks />
+                  <Stack flexGrow={1} overflow="auto">
+                    <TopicTree data={data} pdelete={pdelete} />
+                  </Stack>
+                  <SetPanel set={set} />
                 </Stack>
                 <Ornament />
                 <BottomPanel pget={pget} />
@@ -443,6 +392,33 @@ function Ornament() {
         backgroundColor: theme.palette.primary.main,
       }}
     />
+  );
+}
+
+function Locks() {
+  return (
+    <Accordion
+      defaultExpanded={false}
+      sx={{
+        flexShrink: 0,
+        backgroundColor: "transparent",
+        backgroundImage: "none",
+      }}
+    >
+      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+        <Typography>Locks</Typography>
+      </AccordionSummary>
+      <AccordionDetails sx={{ paddingLeft: 1, paddingRight: 1 }}>
+        <Stack
+          overflow="auto"
+          minHeight={0}
+          maxHeight={"33vh"}
+          paddingTop={"0.5em"}
+        >
+          <LockPanel />
+        </Stack>
+      </AccordionDetails>
+    </Accordion>
   );
 }
 
