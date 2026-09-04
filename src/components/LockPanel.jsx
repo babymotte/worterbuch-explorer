@@ -9,6 +9,9 @@ import {
 import React from "react";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
+import LockIcon from "@mui/icons-material/Lock";
+import LockClockIcon from "@mui/icons-material/LockClock";
+import LockOpenIcon from "@mui/icons-material/LockOpen";
 import KeyEditor from "./KeyEditor";
 import { useWb } from "./Worterbuch";
 import { WbError } from "worterbuch-js";
@@ -230,6 +233,7 @@ function LockRow({
           variant="contained"
           disabled={!lockKey || disabled}
           onClick={lockNow}
+          startIcon={<LockIcon />}
         >
           {locked ? "Locked" : "Lock Now"}
         </Button>
@@ -239,18 +243,23 @@ function LockRow({
           variant="outlined"
           disabled={!lockKey || disabled}
           onClick={tryLock}
+          startIcon={<LockClockIcon />}
         >
           {waiting ? "Waiting for Lock" : "Try Lock"}
         </Button>
       )}
       {locked && (
-        <Button variant="outlined" onClick={releaseLock}>
+        <Button
+          variant="outlined"
+          onClick={releaseLock}
+          startIcon={<LockOpenIcon />}
+        >
           Release Lock
         </Button>
       )}
       <Tooltip title={waiting ? "Cannot remove while waiting for lock" : "Remove"}>
         <span>
-          <IconButton onClick={remove} disabled={waiting}>
+          <IconButton aria-label="Remove" onClick={remove} disabled={waiting}>
             <DeleteIcon />
           </IconButton>
         </span>
