@@ -1,5 +1,6 @@
 import {
   Alert,
+  Box,
   Button,
   IconButton,
   Snackbar,
@@ -61,13 +62,13 @@ export default function LockPanel() {
         const lock = locks.find((lock) => lock.id === id);
         if (lock?.locked && wb) {
           wb.releaseLock(lock.key).catch((err) =>
-            console.error("Error releasing lock:", err)
+            console.error("Error releasing lock:", err),
           );
         }
         return locks.filter((lock) => lock.id !== id);
       });
     },
-    [wb]
+    [wb],
   );
 
   const releaseLock = React.useCallback(
@@ -76,20 +77,20 @@ export default function LockPanel() {
         const lock = locks.find((lock) => lock.id === id);
         if (lock?.locked && wb) {
           wb.releaseLock(lock.key).catch((err) =>
-            console.error("Error releasing lock:", err)
+            console.error("Error releasing lock:", err),
           );
         }
         return locks.map((lock) =>
-          lock.id === id ? { ...lock, locked: false } : lock
+          lock.id === id ? { ...lock, locked: false } : lock,
         );
       });
     },
-    [wb]
+    [wb],
   );
 
   const setLockKey = React.useCallback((id, key) => {
     setLocks((locks) =>
-      locks.map((lock) => (lock.id === id ? { ...lock, key } : lock))
+      locks.map((lock) => (lock.id === id ? { ...lock, key } : lock)),
     );
   }, []);
 
@@ -100,8 +101,8 @@ export default function LockPanel() {
       }
       setLocks((locks) =>
         locks.map((lock) =>
-          lock.id === id ? { ...lock, locking: true } : lock
-        )
+          lock.id === id ? { ...lock, locking: true } : lock,
+        ),
       );
       const seqBefore = lastErrorRef.current.seq;
       wb.lock(key)
@@ -110,8 +111,8 @@ export default function LockPanel() {
             locks.map((lock) =>
               lock.id === id
                 ? { ...lock, locking: false, locked: acquired }
-                : lock
-            )
+                : lock,
+            ),
           );
           if (!acquired) {
             const { seq, err } = lastErrorRef.current;
@@ -126,13 +127,13 @@ export default function LockPanel() {
           console.error("Error acquiring lock:", err);
           setLocks((locks) =>
             locks.map((lock) =>
-              lock.id === id ? { ...lock, locking: false } : lock
-            )
+              lock.id === id ? { ...lock, locking: false } : lock,
+            ),
           );
           setLockError(err.message);
         });
     },
-    [wb]
+    [wb],
   );
 
   const tryLock = React.useCallback(
@@ -142,30 +143,28 @@ export default function LockPanel() {
       }
       setLocks((locks) =>
         locks.map((lock) =>
-          lock.id === id ? { ...lock, waiting: true } : lock
-        )
+          lock.id === id ? { ...lock, waiting: true } : lock,
+        ),
       );
       wb.acquireLock(key)
         .then(() => {
           setLocks((locks) =>
             locks.map((lock) =>
-              lock.id === id
-                ? { ...lock, waiting: false, locked: true }
-                : lock
-            )
+              lock.id === id ? { ...lock, waiting: false, locked: true } : lock,
+            ),
           );
         })
         .catch((err) => {
           console.error("Error acquiring lock:", err);
           setLocks((locks) =>
             locks.map((lock) =>
-              lock.id === id ? { ...lock, waiting: false } : lock
-            )
+              lock.id === id ? { ...lock, waiting: false } : lock,
+            ),
           );
           setLockError(err.message);
         });
     },
-    [wb]
+    [wb],
   );
 
   return (
@@ -184,11 +183,7 @@ export default function LockPanel() {
           remove={() => removeLock(lock.id)}
         />
       ))}
-      <Tooltip title="Add lock">
-        <IconButton sx={{ alignSelf: "flex-start" }} onClick={addLock}>
-          <AddIcon />
-        </IconButton>
-      </Tooltip>
+      <AddLockButton onClick={addLock} />
       <Snackbar
         open={lockError != null}
         autoHideDuration={6000}
@@ -257,13 +252,48 @@ function LockRow({
           Release Lock
         </Button>
       )}
-      <Tooltip title={waiting ? "Cannot remove while waiting for lock" : "Remove"}>
-        <span>
-          <IconButton aria-label="Remove" onClick={remove} disabled={waiting}>
-            <DeleteIcon />
-          </IconButton>
-        </span>
-      </Tooltip>
+      <RemoveButton onClick={remove} disabled={waiting} />
     </Stack>
+  );
+}
+
+function RemoveButton({ onClick, disabled }) {
+  const [hovering, setHovering] = React.useState(false);
+  return (
+    <Tooltip
+      title={disabled ? "Cannot remove while waiting for lock" : "Remove"}
+      sx={{ opacity: hovering ? 1.0 : 0.2 }}
+    >
+      <Box component="span">
+        <IconButton
+          aria-label="Remove"
+          onClick={onClick}
+          disabled={disabled}
+          size="small"
+          onMouseEnter={() => setHovering(true)}
+          onMouseLeave={() => setHovering(false)}
+        >
+          <DeleteIcon />
+        </IconButton>
+      </Box>
+    </Tooltip>
+  );
+}
+
+function AddLockButton({ onClick }) {
+  const [hovering, setHovering] = React.useState(false);
+  return (
+    <Box sx={{ alignSelf: "flex-start" }}>
+      <Tooltip title="Add lock" sx={{ opacity: hovering ? 1.0 : 0.2 }}>
+        <IconButton
+          size="small"
+          onClick={onClick}
+          onMouseEnter={() => setHovering(true)}
+          onMouseLeave={() => setHovering(false)}
+        >
+          <AddIcon />
+        </IconButton>
+      </Tooltip>
+    </Box>
   );
 }
