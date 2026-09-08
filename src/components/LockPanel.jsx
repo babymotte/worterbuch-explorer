@@ -64,7 +64,7 @@ export default function LockPanel() {
     (id) => {
       setLocks((locks) => {
         const lock = locks.find((lock) => lock.id === id);
-        if (lock?.locked && wb) {
+        if (wb) {
           wb.releaseLock(lock.key).catch((err) =>
             console.error("Error releasing lock:", err),
           );
@@ -79,7 +79,7 @@ export default function LockPanel() {
     (id) => {
       setLocks((locks) => {
         const lock = locks.find((lock) => lock.id === id);
-        if (lock?.locked && wb) {
+        if (wb) {
           wb.releaseLock(lock.key).catch((err) =>
             console.error("Error releasing lock:", err),
           );
@@ -262,7 +262,7 @@ function LockRow({
           Release Lock
         </Button>
       )}
-      <RemoveButton onClick={remove} disabled={waiting} />
+      <RemoveButton onClick={remove} />
     </Stack>
   );
 }
