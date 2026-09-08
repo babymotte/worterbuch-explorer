@@ -26,6 +26,10 @@ let nextId = 0;
 export default function LockPanel() {
   const wb = useWb();
   const [locks, setLocks] = React.useState([]);
+  const locksRef = React.useRef(locks);
+  React.useEffect(() => {
+    locksRef.current = locks;
+  }, [locks]);
   const [lockError, setLockError] = React.useState(null);
   const closeLockError = React.useCallback((event, reason) => {
     if (reason === "clickaway") {
@@ -39,6 +43,35 @@ export default function LockPanel() {
   // tracked here and correlated (by sequence number) with a failed lock
   // attempt to recover the actual reason it failed.
   const lastErrorRef = React.useRef({ seq: 0, err: null });
+
+  // Similarly, wb.lock()/wb.acquireLock() don't expose the transactionId of
+  // the lock they acquired, so it's recovered here from the raw ack message
+  // and stashed on the lock's row once the acquisition succeeds. That's what
+  // lets a later, unsolicited LockLost error (errorCode 26) be matched back
+  // to the row that lost its lock.
+  const lastAckRef = React.useRef({ seq: 0, transactionId: null });
+
+  const LOCK_LOST_ERROR_CODE = 26;
+
+  React.useEffect(() => {
+    if (!wb) {
+      return;
+    }
+    const previousOnMessage = wb.onmessage;
+    wb.onmessage = (msg) => {
+      if (msg.ack) {
+        lastAckRef.current = {
+          seq: lastAckRef.current.seq + 1,
+          transactionId: msg.ack.transactionId,
+        };
+      }
+      previousOnMessage?.(msg);
+    };
+    return () => {
+      wb.onmessage = previousOnMessage;
+    };
+  }, [wb]);
+
   React.useEffect(() => {
     if (!wb) {
       return;
@@ -46,6 +79,23 @@ export default function LockPanel() {
     const previousOnError = wb.onerror;
     wb.onerror = (err) => {
       lastErrorRef.current = { seq: lastErrorRef.current.seq + 1, err };
+      if (err.errorCode === LOCK_LOST_ERROR_CODE) {
+        const lostLock = locksRef.current.find(
+          (lock) => lock.transactionId === err.transactionId,
+        );
+        if (lostLock) {
+          setLocks((locks) =>
+            locks.map((lock) =>
+              lock.transactionId === err.transactionId
+                ? { ...lock, locked: false, transactionId: undefined }
+                : lock,
+            ),
+          );
+          setLockError(
+            `Lock on "${lostLock.key}" was lost: ${new WbError(err).message}`,
+          );
+        }
+      }
       previousOnError?.(err);
     };
     return () => {
@@ -85,7 +135,9 @@ export default function LockPanel() {
           );
         }
         return locks.map((lock) =>
-          lock.id === id ? { ...lock, locked: false } : lock,
+          lock.id === id
+            ? { ...lock, locked: false, transactionId: undefined }
+            : lock,
         );
       });
     },
@@ -111,20 +163,23 @@ export default function LockPanel() {
       const seqBefore = lastErrorRef.current.seq;
       wb.lock(key)
         .then((acquired) => {
+          const transactionId = acquired
+            ? lastAckRef.current.transactionId
+            : undefined;
           setLocks((locks) =>
             locks.map((lock) =>
               lock.id === id
-                ? { ...lock, locking: false, locked: acquired }
+                ? { ...lock, locking: false, locked: acquired, transactionId }
                 : lock,
             ),
           );
           if (!acquired) {
             const { seq, err } = lastErrorRef.current;
-            const message =
+            const reason =
               seq !== seqBefore
                 ? new WbError(err).message
                 : "Lock is already held by another client";
-            setLockError(message);
+            setLockError(`Could not acquire lock: ${reason}`);
           }
         })
         .catch((err) => {
@@ -134,7 +189,7 @@ export default function LockPanel() {
               lock.id === id ? { ...lock, locking: false } : lock,
             ),
           );
-          setLockError(err.message);
+          setLockError(`Could not acquire lock: ${err.message}`);
         });
     },
     [wb],
@@ -152,9 +207,12 @@ export default function LockPanel() {
       );
       wb.acquireLock(key)
         .then(() => {
+          const transactionId = lastAckRef.current.transactionId;
           setLocks((locks) =>
             locks.map((lock) =>
-              lock.id === id ? { ...lock, waiting: false, locked: true } : lock,
+              lock.id === id
+                ? { ...lock, waiting: false, locked: true, transactionId }
+                : lock,
             ),
           );
         })
@@ -165,7 +223,7 @@ export default function LockPanel() {
               lock.id === id ? { ...lock, waiting: false } : lock,
             ),
           );
-          setLockError(err.message);
+          setLockError(`Could not acquire lock: ${err.message}`);
         });
     },
     [wb],
@@ -204,7 +262,7 @@ export default function LockPanel() {
           variant="filled"
           sx={{ width: "100%" }}
         >
-          Could not acquire lock: {lockError}
+          {lockError}
         </Alert>
       </Snackbar>
     </Stack>
