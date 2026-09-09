@@ -185,7 +185,7 @@ export default function App() {
               subscribed(false);
             }
           },
-        );
+        ).transactionId;
         if (subscribed) {
           subscribed(true);
         }
