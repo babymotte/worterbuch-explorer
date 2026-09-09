@@ -33,6 +33,19 @@ export default function LockPanel() {
     setLockError(null);
   }, []);
 
+  // The server gives up all of a client's locks the moment its connection
+  // drops, so a lost/replaced connection should immediately reset every row
+  // that thought it was locking, waiting for, or holding a lock.
+  React.useEffect(() => {
+    setLocks((locks) =>
+      locks.map((lock) =>
+        lock.locking || lock.waiting || lock.locked
+          ? { ...lock, locking: false, waiting: false, locked: false }
+          : lock,
+      ),
+    );
+  }, [wb]);
+
   const addLock = React.useCallback(() => {
     setLocks((locks) => [
       ...locks,
